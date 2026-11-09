@@ -1,0 +1,1454 @@
+<!doctype html>
+<html lang="id">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>From Profile Visit to Booking</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Schibsted+Grotesk:wght@400..800&family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap">
+<style>
+/* Layout: one calm slide per screen, presenter-driven. Blush ground, clay fills, brown ink, olive for good. */
+:root{
+  --bg:#FBEDE8; --surface:#FFFAF8; --surface-2:#F6E1D9; --ink:#2F211A; --muted:#7A6257; --line:#EBD4CB;
+  --clay:#D38A70; --accent:#9C5640; --accent-ink:#2F211A; --accent-soft:#F4D6CA;
+  --gold:#8B5E3B; --gold-soft:#EFE1D4;
+  --good:#666B3A; --good-soft:#E7E9D6; --bad:#A9412F; --bad-soft:#F6DCD4;
+  --shadow:0 1px 2px rgba(47,33,26,.05),0 10px 30px rgba(47,33,26,.07);
+  --f-display:"Schibsted Grotesk","Helvetica Neue","Segoe UI",system-ui,sans-serif;
+  --f-body:"Plus Jakarta Sans","Segoe UI",system-ui,-apple-system,sans-serif;
+  --f-mono:"Plus Jakarta Sans","Segoe UI",system-ui,sans-serif;
+}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){
+  --bg:#1C1512; --surface:#251C18; --surface-2:#30251F; --ink:#F7E9E3; --muted:#B9A197; --line:#3E302A;
+  --clay:#D38A70; --accent:#E3A188; --accent-ink:#2F211A; --accent-soft:#45291F;
+  --gold:#CB9A6E; --gold-soft:#36281D;
+  --good:#B5BA80; --good-soft:#2A2C1C; --bad:#EE8B74; --bad-soft:#40231C;
+  --shadow:0 1px 2px rgba(0,0,0,.3),0 10px 30px rgba(0,0,0,.3); color-scheme:dark }}
+:root[data-theme="dark"]{
+  --bg:#1C1512; --surface:#251C18; --surface-2:#30251F; --ink:#F7E9E3; --muted:#B9A197; --line:#3E302A;
+  --clay:#D38A70; --accent:#E3A188; --accent-ink:#2F211A; --accent-soft:#45291F;
+  --gold:#CB9A6E; --gold-soft:#36281D;
+  --good:#B5BA80; --good-soft:#2A2C1C; --bad:#EE8B74; --bad-soft:#40231C;
+  --shadow:0 1px 2px rgba(0,0,0,.3),0 10px 30px rgba(0,0,0,.3); color-scheme:dark }
+
+html{height:100%;box-sizing:border-box}
+*,*::before,*::after{box-sizing:border-box}
+[hidden]{display:none!important}
+body{height:100%;margin:0;background:var(--bg);color:var(--ink);font-family:var(--f-body);font-size:16px;line-height:1.55;
+  padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));
+  display:flex;flex-direction:column;overflow:hidden}
+button,input,select,textarea{font:inherit;color:inherit}
+:focus-visible{outline:2.5px solid var(--accent);outline-offset:2px;border-radius:6px}
+svg.i{width:1.25em;height:1.25em;stroke:currentColor;fill:none;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round;flex:none}
+
+/* chrome */
+.top{display:flex;align-items:center;justify-content:space-between;gap:12px;padding-block:12px 8px;flex:none}
+.brand{display:flex;align-items:center;gap:10px;font-size:.8rem;color:var(--muted);letter-spacing:.06em;text-transform:uppercase;font-weight:600;min-width:0}
+.brand b{color:var(--accent)}
+.brand span{white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.top-r{display:flex;align-items:center;gap:8px}
+.iconbtn{display:inline-flex;align-items:center;gap:6px;border:1px solid var(--line);background:var(--surface);border-radius:999px;padding:7px 12px;cursor:pointer;font-size:.82rem;font-weight:600}
+.iconbtn:hover{border-color:var(--accent)}
+.count{font-family:var(--f-mono);font-size:.8rem;color:var(--muted);font-variant-numeric:tabular-nums}
+.timer{display:flex;align-items:center;gap:6px;background:var(--gold-soft);color:var(--gold);border-radius:999px;padding:4px 6px 4px 12px;font-family:var(--f-mono);font-weight:700;font-size:.85rem}
+.timer button{border:0;background:transparent;color:inherit;cursor:pointer;padding:3px 7px;border-radius:999px;font-size:.75rem;font-family:var(--f-body);font-weight:700}
+.timer button:hover{background:var(--surface)}
+.timer.done{background:var(--bad-soft);color:var(--bad)}
+
+.deck{position:relative;flex:1;min-height:0}
+.slide{position:absolute;inset:0;overflow-y:auto;overflow-x:hidden;display:none;flex-direction:column;padding-block:12px 28px}
+.slide.active{display:flex;animation:slideIn .5s cubic-bezier(.2,.7,.2,1) both}
+@keyframes slideIn{from{opacity:.001;transform:translateX(18px)}to{opacity:1;transform:none}}
+.slide.back.active{animation-name:slideBack}
+@keyframes slideBack{from{opacity:.001;transform:translateX(-18px)}to{opacity:1;transform:none}}
+.slide.active .funnel-art .lvl{animation:open .8s cubic-bezier(.2,.7,.2,1) both}
+.slide.active .funnel-art .lvl:nth-child(2){animation-delay:.15s}.slide.active .funnel-art .lvl:nth-child(3){animation-delay:.3s}.slide.active .funnel-art .lvl:nth-child(4){animation-delay:.45s}
+@keyframes open{from{clip-path:inset(0 50% 0 50% round 12px)}to{clip-path:inset(0 0 0 0 round 12px)}}
+@media (prefers-reduced-motion:reduce){.slide.active,.slide.active .funnel-art .lvl{animation:none}}
+.inner{margin:auto;width:100%;max-width:1140px}
+
+.bottom{flex:none;display:flex;align-items:center;gap:12px;padding-block:8px max(12px,env(safe-area-inset-bottom,0px))}
+.prog{flex:1;height:4px;background:var(--line);border-radius:4px;overflow:hidden}
+.prog i{display:block;height:100%;background:var(--clay);width:0;transition:width .35s ease}
+.nav{display:inline-flex;align-items:center;justify-content:center;width:42px;height:42px;border-radius:50%;border:1px solid var(--line);background:var(--surface);cursor:pointer}
+.nav:hover:not(:disabled){border-color:var(--accent);color:var(--accent)}
+.nav:disabled{opacity:.35;cursor:default}
+
+.menu{position:fixed;inset:0;z-index:30;background:color-mix(in srgb,var(--ink) 35%,transparent);display:flex;justify-content:flex-end}
+.menu-panel{width:min(380px,100%);height:100%;background:var(--surface);overflow-y:auto;padding:max(20px,env(safe-area-inset-top,0px)) max(20px,env(safe-area-inset-right,0px)) 20px 20px;box-shadow:var(--shadow)}
+.menu-panel h3{font-family:var(--f-display);margin:0 0 12px;font-size:1.2rem}
+.menu-panel ol{list-style:none;margin:0;padding:0;display:grid;gap:2px}
+.menu-panel button{width:100%;text-align:left;display:flex;gap:12px;border:0;background:transparent;padding:9px 10px;border-radius:10px;cursor:pointer}
+.menu-panel button:hover,.menu-panel button[aria-current="true"]{background:var(--accent-soft)}
+.menu-panel .n{font-family:var(--f-mono);color:var(--muted);font-size:.78rem;width:22px;padding-top:2px}
+.menu-panel .sec{font-size:.68rem;text-transform:uppercase;letter-spacing:.1em;color:var(--accent);font-weight:700;margin:14px 10px 4px}
+
+/* type */
+.eyebrow{display:inline-flex;align-items:center;gap:10px;font-size:.9rem;font-weight:600;color:var(--muted);margin:0 0 16px}
+.eyebrow::before{content:"";width:24px;height:1.5px;background:var(--clay);flex:none}
+h1,h2,h3{font-family:var(--f-display);text-wrap:balance;margin:0;letter-spacing:-.02em}
+h1{font-size:clamp(2.4rem,6vw,5rem);line-height:1.02;letter-spacing:-.035em;font-weight:600}
+h2{font-size:clamp(1.8rem,3.8vw,3.1rem);line-height:1.05;font-weight:600}
+h3{font-size:clamp(1.1rem,1.7vw,1.35rem);line-height:1.2;font-weight:700}
+.lead{font-size:clamp(1.02rem,1.55vw,1.28rem);color:var(--muted);max-width:62ch;margin:14px 0 0}
+p{margin:0}
+.muted{color:var(--muted)}
+.small{font-size:.85rem}
+.mono{font-family:var(--f-mono);font-variant-numeric:tabular-nums}
+em.hl{font-style:normal;color:var(--accent)}
+.tag{display:inline-block;font-size:.76rem;font-weight:600;padding:3px 8px;border-radius:999px;background:var(--surface-2);color:var(--muted)}
+
+/* building blocks */
+.row{display:flex;flex-wrap:wrap;gap:12px;align-items:center}
+.stack{display:grid;gap:14px}
+.g2{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:18px}
+.g3{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:16px}
+.g4{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:14px}
+.split{display:grid;grid-template-columns:minmax(0,1.1fr) minmax(0,.9fr);gap:28px;align-items:center}
+.card{background:var(--surface);border:1px solid var(--line);border-radius:14px;padding:22px;min-width:0;box-shadow:0 1px 2px rgba(47,33,26,.04)}
+.card.soft{background:var(--surface-2);border-color:transparent}
+.ic{display:inline-flex;align-items:center;justify-content:center;width:42px;height:42px;border-radius:50%;background:transparent;border:1px solid var(--line);color:var(--accent);font-size:1.05rem;flex:none}
+.ic.gold{color:var(--gold)}
+.ic.good{color:var(--good)}
+.ic.bad{color:var(--bad)}
+.btn{display:inline-flex;align-items:center;gap:8px;border:1px solid var(--line);background:var(--surface);border-radius:999px;padding:9px 16px;cursor:pointer;font-weight:600;font-size:.9rem}
+.btn:hover{border-color:var(--accent)}
+.btn.on,.btn[aria-pressed="true"]{background:var(--clay);border-color:var(--clay);color:var(--accent-ink)}
+.mt{margin-top:28px}.mt-s{margin-top:14px}
+label.f{display:grid;gap:5px;font-size:.78rem;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.06em}
+input.t,textarea.t,select.t{width:100%;border:1px solid var(--line);background:var(--surface);border-radius:12px;padding:10px 12px;font-size:.95rem;text-transform:none;letter-spacing:0;font-weight:500;color:var(--ink)}
+textarea.t{resize:vertical;min-height:44px}
+input.t:focus,textarea.t:focus{outline:none;border-color:var(--accent)}
+input[type=range]{width:100%;accent-color:var(--accent)}
+
+/* animation */
+.slide.active .a{animation:rise .55s cubic-bezier(.2,.7,.2,1) both;animation-delay:calc(var(--i,0) * 70ms)}
+@keyframes rise{from{opacity:0;transform:translateY(14px)}to{opacity:1;transform:none}}
+@media (prefers-reduced-motion:reduce){.slide.active .a{animation:none}*{transition:none!important}}
+
+/* cover */
+.cover{display:grid;grid-template-columns:minmax(0,1.25fr) minmax(0,.75fr);gap:36px;align-items:center}
+.cover h1 .q{color:var(--accent)}
+.byline{display:flex;gap:14px;align-items:center;margin-top:30px;flex-wrap:wrap}
+.byline .who{font-weight:700}
+.funnel-art{position:relative;aspect-ratio:1/1.12;max-width:100%}
+.funnel-art .lvl{position:absolute;left:50%;transform:translateX(-50%);border-radius:16px;display:flex;align-items:center;gap:10px;padding:0 16px;font-weight:700;font-size:.9rem;box-shadow:var(--shadow);white-space:nowrap}
+.funnel-art .lvl:nth-child(1){top:2%;width:96%;height:19%;background:var(--surface);border:1px solid var(--line)}
+.funnel-art .lvl:nth-child(2){top:26%;width:80%;height:19%;background:var(--surface-2)}
+.funnel-art .lvl:nth-child(3){top:50%;width:64%;height:19%;background:var(--accent-soft);color:var(--accent)}
+.funnel-art .lvl:nth-child(4){top:74%;width:48%;height:19%;background:var(--clay);color:var(--accent-ink)}
+.funnel-art .lvl small{font-weight:500;opacity:.75;font-size:.75rem;display:block}
+
+/* agenda */
+.agenda{display:grid;gap:8px}
+.ag{display:grid;grid-template-columns:96px minmax(0,1fr) auto;gap:16px;align-items:center;padding:14px 18px;border-radius:14px;background:var(--surface);border:1px solid var(--line)}
+.ag .mono{color:var(--muted);font-size:.85rem}
+.ag.ws{background:var(--accent-soft);border-color:transparent}
+.ag.ws .tag{background:var(--clay);color:var(--accent-ink)}
+
+/* poll */
+.poll{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:16px}
+.poll button{text-align:left;border:1px solid var(--line);background:var(--surface);border-radius:16px;padding:22px;cursor:pointer;display:grid;gap:14px;min-width:0}
+.poll button:hover{border-color:var(--accent)}
+.poll .num{font-family:var(--f-display);font-size:3rem;font-weight:600;line-height:1;color:var(--accent);font-variant-numeric:tabular-nums}
+
+/* counters */
+.meters{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:14px}
+.meter{background:var(--surface);border:1px solid var(--line);border-radius:14px;padding:18px;min-width:0}
+.meter .v{font-family:var(--f-display);font-weight:600;font-size:clamp(1.6rem,3.2vw,2.6rem);line-height:1.05;font-variant-numeric:tabular-nums;margin-top:10px}
+.meter.zero{background:var(--bad-soft);border-color:transparent}
+.meter.zero .v{color:var(--bad)}
+.punch{margin-top:26px;font-family:var(--f-display);font-size:clamp(1.3rem,2.4vw,1.9rem);font-weight:700;max-width:30ch;text-wrap:balance}
+
+/* journey */
+.journey{position:relative;display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:12px}
+.journey .track{position:absolute;left:12%;right:12%;top:38px;height:2px;background:repeating-linear-gradient(90deg,var(--line) 0 8px,transparent 8px 14px)}
+.journey .walker{position:absolute;top:31px;left:12%;width:16px;height:16px;border-radius:50%;background:var(--clay);box-shadow:0 0 0 6px var(--accent-soft);animation:walk 6s ease-in-out infinite}
+@keyframes walk{0%{left:12%}30%{left:37%}55%{left:62%}85%,100%{left:86%}}
+@media (prefers-reduced-motion:reduce){.journey .walker{animation:none;left:86%}}
+.station{position:relative;z-index:1;display:grid;justify-items:center;text-align:center;gap:10px;border:0;background:transparent;cursor:pointer;padding:0 4px;min-width:0}
+.station .ring{width:78px;height:78px;border-radius:50%;display:grid;place-items:center;background:var(--surface);border:2px solid var(--line);font-size:1.6rem;transition:all .25s}
+.station[aria-pressed="true"] .ring{border-color:var(--accent);background:var(--clay);color:var(--accent-ink);transform:scale(1.06)}
+.station .lab{font-weight:700;font-size:.95rem}
+.station .sub{font-size:.8rem;color:var(--muted)}
+.duo{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:16px;margin-top:22px}
+.duo .card h3{display:flex;align-items:center;gap:10px;margin-bottom:8px}
+.duo .q{margin-top:12px;padding:12px 14px;border-radius:12px;background:var(--surface-2);font-weight:600}
+
+/* simulator */
+.sim{display:grid;grid-template-columns:minmax(0,.85fr) minmax(0,1.15fr);gap:26px;align-items:start}
+.ctrl{display:grid;gap:22px}
+.ctrl .hd{display:flex;justify-content:space-between;align-items:baseline;gap:10px;margin-bottom:6px}
+.ctrl .hd b{font-size:.98rem}
+.ctrl .lvltxt{font-size:.82rem;color:var(--accent);font-weight:700;white-space:nowrap}
+.ctrl .hint{font-size:.8rem;color:var(--muted);margin-top:4px}
+.bars{display:grid;gap:10px}
+.bar{display:grid;grid-template-columns:150px minmax(0,1fr);gap:12px;align-items:center}
+.bar .lb{font-size:.85rem;font-weight:600;display:flex;align-items:center;gap:8px}
+.bar .tr{background:var(--surface-2);border-radius:10px;height:40px;position:relative;overflow:hidden}
+.bar .fill{height:100%;border-radius:10px;background:var(--accent-soft);transition:width .45s cubic-bezier(.2,.7,.2,1);display:flex;align-items:center;justify-content:flex-end;padding-right:10px;min-width:56px}
+.bar .fill span{font-family:var(--f-mono);font-weight:700;font-size:.9rem;color:var(--accent)}
+.bar.b4 .fill{background:var(--clay)}.bar.b4 .fill span{color:var(--accent-ink)}
+.cpb{display:flex;justify-content:space-between;align-items:center;gap:14px;margin-top:16px;padding:16px 18px;border-radius:16px;background:var(--gold-soft);color:var(--gold);flex-wrap:wrap}
+.cpb .v{font-family:var(--f-display);font-weight:600;font-size:1.8rem;font-variant-numeric:tabular-nums}
+
+/* matrix */
+.matrix{display:grid;grid-template-columns:44px minmax(0,1fr) minmax(0,1fr);grid-template-rows:auto auto auto;gap:10px}
+.matrix .axis{font-size:.72rem;text-transform:uppercase;letter-spacing:.1em;font-weight:700;color:var(--muted);display:flex;align-items:center;justify-content:center}
+.matrix .axis.y{writing-mode:vertical-rl;transform:rotate(180deg)}
+.quad{border:1px solid var(--line);background:var(--surface);border-radius:14px;padding:18px;text-align:left;cursor:pointer;display:grid;gap:8px;min-width:0;align-content:start}
+.quad:hover{border-color:var(--accent)}
+.quad .st{display:flex;align-items:center;gap:8px;font-weight:600;font-family:var(--f-display);font-size:1.1rem}
+.quad.burn{background:var(--bad-soft);border-color:transparent}
+.quad.win{background:var(--good-soft);border-color:transparent}
+.quad.win .st{color:var(--good)}
+.quad[aria-pressed="true"]{outline:2.5px solid var(--accent);outline-offset:2px}
+.quad .more{display:none;font-size:.9rem}
+.quad[aria-pressed="true"] .more{display:block}
+
+/* diagnosis */
+.diag{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:18px}
+.symptom{display:grid;gap:12px}
+.symptom .sig{font-family:var(--f-mono);font-size:.9rem;background:var(--surface-2);padding:10px 12px;border-radius:10px}
+.symptom .fix{display:flex;gap:10px;align-items:flex-start;padding-top:12px;border-top:1px dashed var(--line)}
+
+/* case */
+.case-head{display:flex;gap:16px;align-items:flex-start;flex-wrap:wrap}
+.case-head .ic{width:58px;height:58px;font-size:1.5rem;border-radius:14px}
+.chips{display:flex;flex-wrap:wrap;gap:8px;margin-top:12px}
+.chip{display:inline-flex;align-items:center;gap:6px;padding:6px 12px;border-radius:999px;background:var(--surface);border:1px solid var(--line);font-size:.82rem;font-weight:600}
+.flow{list-style:none;margin:24px 0 0;padding:0;display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:12px;counter-reset:f}
+.flow li{position:relative;background:var(--surface);border:1px solid var(--line);border-radius:16px;padding:16px;min-width:0}
+.flow li:not(:last-child)::after{content:"";position:absolute;right:-11px;top:34px;width:10px;height:10px;border-top:2px solid var(--accent);border-right:2px solid var(--accent);transform:rotate(45deg);z-index:1;background:transparent}
+.flow .st{display:flex;align-items:center;gap:8px;font-size:.72rem;text-transform:uppercase;letter-spacing:.1em;font-weight:700;color:var(--accent);margin-bottom:8px}
+.flow p{font-size:.9rem}
+.flow li.res{background:var(--accent-soft);border-color:transparent}
+.case-foot{display:grid;grid-template-columns:minmax(0,1.2fr) minmax(0,.8fr);gap:14px;margin-top:14px}
+.slots{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:10px}
+.slot{border:1.5px dashed var(--line);border-radius:14px;padding:10px 12px;min-width:0}
+.slot .k{font-size:.7rem;text-transform:uppercase;letter-spacing:.08em;color:var(--muted);font-weight:700}
+.slot .val{font-family:var(--f-display);font-weight:600;font-size:1.15rem;margin-top:4px;min-height:1.4em;outline:none;overflow-wrap:anywhere}
+.slot .val:empty::before{content:"isi angka";color:var(--muted);font-weight:500;font-family:var(--f-body);font-size:.85rem}
+.slot:focus-within{border-color:var(--accent);border-style:solid}
+.lesson{background:var(--ink);color:var(--bg);border-radius:16px;padding:16px 18px}
+.lesson .k{font-size:.7rem;text-transform:uppercase;letter-spacing:.1em;font-weight:700;opacity:.7;margin-bottom:6px}
+
+/* naga kembar */
+.ba{display:flex;align-items:center;gap:14px;flex-wrap:wrap}
+.ba .card{padding:14px 18px;display:grid;gap:6px;flex:1;min-width:200px;justify-items:start}
+.ba-n{font-size:.95rem;color:var(--muted)}
+.ba-n b{font-family:var(--f-display);font-size:1.7rem;color:var(--ink);margin-left:6px}
+.ba-n b:first-child{margin-left:0}
+.ba-arr{font-size:1.6rem;color:var(--accent)}
+.anat{display:grid;gap:6px}
+.anat div{display:flex;justify-content:space-between;gap:10px;align-items:baseline;padding:7px 10px;border-radius:10px;background:var(--surface-2);font-size:.88rem}
+.anat span{font-weight:600;min-width:0}
+.anat em{font-style:normal;font-size:.68rem;text-transform:uppercase;letter-spacing:.07em;font-weight:700;color:var(--accent);white-space:nowrap}
+table.nt td:not(:first-child),table.nt th:not(:first-child){text-align:right;font-family:var(--f-mono);font-variant-numeric:tabular-nums}
+table.nt{min-width:520px}
+table.nt td{padding-block:8px}
+table.nt tr.cv td{color:var(--accent);font-size:.82rem;background:var(--accent-soft);font-weight:700}
+table.nt tr.cv td:first-child{font-weight:600}
+
+.chart{position:relative;margin-top:8px}
+.chart svg{display:block;width:100%;height:auto}
+.chart text{fill:var(--muted);font-family:var(--f-mono);font-size:11px}
+.chart .grid{stroke:var(--line);stroke-width:1}
+.chart .bar{fill:var(--clay)}
+.chart .hit{fill:transparent;cursor:pointer}
+.chart .hit:hover+.bar,.chart .bar.on{fill:var(--ink)}
+.ctip{position:absolute;top:0;transform:translateX(-50%);background:var(--ink);color:var(--bg);font-size:.78rem;font-weight:600;padding:5px 9px;border-radius:8px;white-space:nowrap;pointer-events:none}
+
+.km{display:grid;gap:12px;align-content:start}
+.km .k{font-size:.68rem;text-transform:uppercase;letter-spacing:.08em;font-weight:700;color:var(--muted);margin-bottom:3px}
+.km p{font-size:.88rem}
+.km .msg{font-weight:700;color:var(--accent)}
+
+/* diagnosis */
+.dx{display:grid;grid-template-columns:minmax(0,.8fr) minmax(0,1.2fr);gap:22px;align-items:start}
+.stgs{display:grid;gap:8px}
+.stg{display:grid;grid-template-columns:auto minmax(0,1fr) auto auto;gap:12px;align-items:center;padding:12px 14px;border-radius:12px;background:var(--surface);border:1px solid var(--line)}
+.stg b{display:block;font-size:.92rem}
+.stg .muted{font-size:.78rem}
+.stg .v{font-weight:600;font-variant-numeric:tabular-nums;font-size:1.05rem;text-align:right}
+.pill{display:inline-flex;align-items:center;gap:5px;font-size:.76rem;font-weight:600;padding:4px 10px;border-radius:999px;white-space:nowrap}
+.pill.ok{background:var(--good-soft);color:var(--good)}
+.pill.no{background:var(--bad-soft);color:var(--bad)}
+.pill.c{background:var(--gold-soft);color:var(--gold)}
+.pill.e{background:var(--accent-soft);color:var(--accent)}
+.pill.a2{background:var(--surface-2);color:var(--ink)}
+.dx-out{margin-top:12px;padding:18px;border-radius:14px;background:var(--ink);color:var(--bg)}
+.dx-out h3{margin-bottom:6px}
+.dx-out p{font-size:.88rem;opacity:.85}
+.dx-out ul{margin:10px 0 0;padding:0;list-style:none;display:grid;gap:6px;font-size:.88rem}
+.dx-out li{display:flex;gap:8px;align-items:flex-start}
+.dx-out li::before{content:"";width:14px;height:14px;border:1.5px solid currentColor;border-radius:4px;flex:none;margin-top:3px;opacity:.7}
+table.gl td{font-size:.88rem}
+table.gl td:nth-child(2){white-space:nowrap}
+@media (max-width:900px){.dx{grid-template-columns:minmax(0,1fr)}}
+@media (max-width:600px){.stg{grid-template-columns:minmax(0,1fr) auto}.stg .ic{display:none}}
+
+/* compare table */
+.tbl-wrap{overflow-x:auto;border-radius:16px;border:1px solid var(--line);background:var(--surface)}
+table{border-collapse:collapse;width:100%;min-width:640px;font-size:.92rem}
+th,td{text-align:left;padding:13px 16px;border-bottom:1px solid var(--line);vertical-align:top}
+th{font-size:.78rem;font-weight:600;color:var(--muted);background:var(--surface-2)}
+tr:last-child td{border-bottom:0}
+td:first-child{font-weight:700}
+
+/* divider */
+.divider{display:grid;gap:20px;justify-items:start}
+.divider .big{font-family:var(--f-display);font-weight:600;font-size:clamp(3rem,9vw,7.5rem);line-height:.9;letter-spacing:-.04em}
+.divider .big span{color:var(--accent)}
+.prep{display:flex;gap:12px;flex-wrap:wrap}
+
+/* IG phone */
+.phone{width:320px;max-width:100%;margin:0 auto;border-radius:36px;border:9px solid var(--ink);background:var(--surface);padding:18px 16px 16px;box-shadow:var(--shadow)}
+.ig-top{display:flex;align-items:center;gap:16px}
+.ig-av{width:74px;height:74px;border-radius:50%;flex:none;padding:3px;background:conic-gradient(var(--accent),var(--gold),var(--accent))}
+.ig-av div{width:100%;height:100%;border-radius:50%;background:var(--surface-2);border:3px solid var(--surface);display:grid;place-items:center;color:var(--accent);font-size:1.6rem}
+.ig-stats{display:grid;grid-template-columns:repeat(3,1fr);flex:1;text-align:center;font-size:.72rem;color:var(--muted)}
+.ig-stats b{display:block;font-size:.95rem;color:var(--ink)}
+.ig-name{font-weight:700;font-size:.9rem;margin-top:10px}
+.ig-cat{font-size:.78rem;color:var(--muted)}
+.ig-bio{font-size:.82rem;white-space:pre-line;line-height:1.45;margin-top:2px;overflow-wrap:anywhere}
+.ig-link{font-size:.8rem;color:var(--accent);font-weight:600;display:flex;align-items:center;gap:4px;margin-top:2px}
+.ig-btns{display:grid;grid-template-columns:1fr 1fr;gap:6px;margin-top:10px}
+.ig-btns span{background:var(--surface-2);border-radius:8px;text-align:center;font-size:.78rem;font-weight:700;padding:6px}
+.ig-btns span.pri{background:var(--clay);color:var(--accent-ink)}
+.ig-hl{display:flex;gap:10px;margin-top:14px;overflow-x:auto;padding-bottom:4px}
+.ig-hl div{display:grid;justify-items:center;gap:4px;font-size:.66rem;flex:none;width:54px;text-align:center}
+.ig-hl i{width:50px;height:50px;border-radius:50%;border:1.5px solid var(--line);display:grid;place-items:center;background:var(--surface-2);color:var(--accent);font-style:normal}
+.ig-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:3px;margin-top:12px}
+.ig-grid div{aspect-ratio:4/5;background:var(--surface-2);border-radius:4px;position:relative;display:flex;align-items:flex-end;padding:5px;font-size:.62rem;font-weight:700;line-height:1.2}
+.ig-grid div.pin{background:var(--accent-soft);color:var(--accent)}
+.ig-grid div.pin::before{content:"";position:absolute;top:5px;right:5px;width:11px;height:11px;background:currentColor;-webkit-mask:var(--pin) center/contain no-repeat;mask:var(--pin) center/contain no-repeat}
+:root{--pin:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cpath d='M9 2h6l-1 7 4 4H6l4-4z M11 13h2v9h-2z'/%3E%3C/svg%3E")}
+.charc{font-family:var(--f-mono);font-size:.75rem;color:var(--muted)}
+.charc.over{color:var(--bad);font-weight:700}
+.formula{display:flex;flex-wrap:wrap;gap:8px;align-items:center;font-weight:700}
+.formula .p{padding:8px 14px;border-radius:12px;background:var(--accent-soft);color:var(--accent)}
+.formula .op{color:var(--muted)}
+
+/* checklist */
+.checks{display:grid;gap:8px}
+.ck{display:flex;gap:12px;align-items:flex-start;padding:11px 14px;border-radius:12px;background:var(--surface);border:1px solid var(--line);cursor:pointer;font-size:.92rem}
+.ck input{width:20px;height:20px;accent-color:var(--accent);margin-top:2px;flex:none}
+.ck small{display:block;color:var(--muted);font-size:.8rem}
+.score{display:grid;justify-items:center;gap:6px;text-align:center}
+.score .ring{width:150px;height:150px;border-radius:50%;display:grid;place-items:center;background:conic-gradient(var(--accent) calc(var(--p,0)*1%),var(--surface-2) 0)}
+.score .ring div{width:118px;height:118px;border-radius:50%;background:var(--surface);display:grid;place-items:center;font-family:var(--f-display);font-weight:600;font-size:2.2rem;font-variant-numeric:tabular-nums}
+
+/* reviews */
+.revs{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:16px}
+.revcol h3{display:flex;align-items:center;gap:8px;margin-bottom:10px}
+.rv{display:block;width:100%;text-align:left;border:1px solid var(--line);background:var(--surface);border-radius:14px;padding:12px 14px;cursor:pointer;margin-bottom:8px;font-size:.9rem}
+.rv:hover{border-color:var(--accent)}
+.rv .stars{color:var(--gold);letter-spacing:2px;font-size:.8rem}
+.rv .var{display:none;margin-top:8px;font-size:.78rem;font-weight:700;color:var(--accent)}
+.rv[aria-pressed="true"]{background:var(--accent-soft);border-color:transparent}
+.rv[aria-pressed="true"] .var{display:inline-flex;gap:6px;align-items:center}
+.vboard{display:grid;gap:8px}
+.vrow{display:grid;grid-template-columns:minmax(0,1fr) 60px 60px;gap:10px;align-items:center;padding:10px 14px;border-radius:12px;background:var(--surface);border:1px solid var(--line);font-size:.9rem}
+.vrow.both{background:var(--gold-soft);border-color:transparent}
+.vrow .mono{text-align:center}
+.vhead{display:grid;grid-template-columns:minmax(0,1fr) 60px 60px;gap:10px;padding:0 14px;font-size:.7rem;text-transform:uppercase;letter-spacing:.08em;color:var(--muted);font-weight:700}
+.vhead span:not(:first-child){text-align:center}
+
+/* icp */
+.icps{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px}
+.icp{text-align:left;border:1px solid var(--line);background:var(--surface);border-radius:16px;padding:16px;cursor:pointer;display:grid;gap:8px;min-width:0}
+.icp:hover{border-color:var(--accent)}
+.icp[aria-pressed="true"]{background:var(--clay);border-color:var(--clay);color:var(--accent-ink)}
+.icp[aria-pressed="true"] .muted{color:inherit;opacity:.8}
+.icp-detail{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px;margin-top:16px}
+.icp-detail .k{font-size:.7rem;text-transform:uppercase;letter-spacing:.08em;color:var(--muted);font-weight:700;margin-bottom:6px}
+
+/* generator */
+.eq{display:flex;flex-wrap:wrap;gap:8px;align-items:center;margin-top:16px}
+.eq .p{padding:8px 14px;border-radius:12px;background:var(--surface);border:1px solid var(--line);font-weight:700;font-size:.9rem}
+.eq .p.a{background:var(--clay);color:var(--accent-ink);border-color:var(--clay)}
+.eq .op{color:var(--muted);font-weight:700}
+.gen{display:grid;grid-template-columns:minmax(0,.9fr) minmax(0,1.1fr);gap:24px;margin-top:20px;align-items:start}
+.pick{display:grid;gap:14px}
+.pick .k{font-size:.72rem;text-transform:uppercase;letter-spacing:.1em;font-weight:700;color:var(--muted);margin-bottom:6px}
+.pick .row{gap:6px}
+.pick .btn{padding:7px 12px;font-size:.82rem}
+.brief{background:var(--surface);border:1px solid var(--line);border-radius:16px;overflow:hidden}
+.brief .bh{background:var(--ink);color:var(--bg);padding:14px 18px;display:flex;justify-content:space-between;gap:10px;align-items:center;flex-wrap:wrap}
+.brief .bh b{font-family:var(--f-display);font-size:1.05rem}
+.brief dl{margin:0;display:grid}
+.brief dl div{display:grid;grid-template-columns:120px minmax(0,1fr);gap:12px;padding:12px 18px;border-bottom:1px solid var(--line)}
+.brief dl div:last-child{border-bottom:0}
+.brief dt{font-size:.72rem;text-transform:uppercase;letter-spacing:.08em;font-weight:700;color:var(--muted);padding-top:3px}
+.brief dd{margin:0;font-size:.93rem}
+
+/* budget */
+.rules{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:12px}
+.rule{display:grid;gap:10px}
+.rule .v{font-family:var(--f-display);font-weight:600;font-size:1.35rem;line-height:1.1}
+.kpi{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:18px;margin-top:18px}
+.kpi .out{display:grid;gap:4px}
+.kpi .big{font-family:var(--f-display);font-weight:600;font-size:clamp(1.8rem,3.4vw,2.6rem);line-height:1;font-variant-numeric:tabular-nums}
+.verdict{display:flex;align-items:center;gap:12px;padding:14px 16px;border-radius:14px;font-weight:700;margin-top:12px}
+.verdict.ok{background:var(--good-soft);color:var(--good)}
+.verdict.no{background:var(--bad-soft);color:var(--bad)}
+.inrow{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px}
+
+/* test board */
+.board{display:grid;gap:8px}
+.br{display:grid;grid-template-columns:minmax(0,1.3fr) 110px 100px 110px minmax(0,1fr);gap:10px;align-items:center;padding:10px 14px;border-radius:14px;background:var(--surface);border:1px solid var(--line)}
+.br.h{background:transparent;border:0;padding-block:0;font-size:.7rem;text-transform:uppercase;letter-spacing:.08em;color:var(--muted);font-weight:700}
+.br input.t{padding:7px 10px;font-size:.9rem}
+.br .st{display:inline-flex;align-items:center;gap:6px;font-weight:700;font-size:.82rem;padding:5px 10px;border-radius:999px;justify-self:start}
+.br .st.ok{background:var(--good-soft);color:var(--good)}
+.br .st.no{background:var(--bad-soft);color:var(--bad)}
+.br.off{opacity:.7}
+.br.off input.name{text-decoration:line-through}
+.scale{display:flex;gap:18px;align-items:center;flex-wrap:wrap;margin-top:16px;padding:18px;border-radius:14px;background:var(--ink);color:var(--bg)}
+.scale .big{font-family:var(--f-display);font-weight:600;font-size:2.2rem;font-variant-numeric:tabular-nums;line-height:1}
+.coins{display:flex;gap:6px;flex-wrap:wrap}
+.coins span{width:34px;height:34px;border-radius:50%;background:var(--gold);color:var(--ink);display:grid;place-items:center;font-size:.62rem;font-weight:600;font-family:var(--f-mono)}
+
+/* weekly + plan */
+.ratio{display:grid;gap:10px}
+.ratio .f{font-family:var(--f-mono);font-size:.82rem;background:var(--surface-2);padding:8px 10px;border-radius:10px}
+.week{display:grid;grid-template-columns:repeat(7,minmax(0,1fr));gap:10px}
+.day{background:var(--surface);border:1px solid var(--line);border-radius:16px;padding:14px;display:grid;gap:8px;align-content:start;min-width:0}
+.day .d{font-family:var(--f-mono);font-size:.75rem;color:var(--accent);font-weight:700}
+.day b{font-size:.92rem;line-height:1.3}
+.day p{font-size:.8rem;color:var(--muted)}
+.day.go{background:var(--clay);border-color:var(--clay);color:var(--accent-ink)}
+.day.go .d,.day.go p{color:inherit;opacity:.85}
+
+.close{display:grid;gap:22px;justify-items:start}
+.close blockquote{margin:0;font-family:var(--f-display);font-weight:600;font-size:clamp(2rem,5.4vw,4.4rem);line-height:1;letter-spacing:-.03em;max-width:16ch}
+.close blockquote span{color:var(--accent)}
+
+.note{font-size:.78rem;color:var(--muted);display:flex;gap:6px;align-items:center;margin-top:14px}
+
+@media (max-width:900px){
+  .cover,.split,.sim,.gen,.kpi,.case-foot{grid-template-columns:minmax(0,1fr)}
+  .g4,.meters,.rules,.flow,.slots{grid-template-columns:repeat(2,minmax(0,1fr))}
+  .g3,.poll,.icps,.icp-detail{grid-template-columns:repeat(2,minmax(0,1fr))}
+  .week{grid-template-columns:repeat(4,minmax(0,1fr))}
+  .funnel-art{max-width:360px;margin:0 auto;width:100%}
+  .flow li::after{display:none}
+  .br{grid-template-columns:minmax(0,1fr) 90px 90px;}
+  .br .cpv-c{display:none}
+  .br.h span:nth-child(4){display:none}
+}
+@media (max-width:600px){
+  .g2,.g3,.g4,.meters,.rules,.flow,.poll,.icps,.icp-detail,.diag,.revs,.duo,.inrow{grid-template-columns:minmax(0,1fr)}
+  .slots{grid-template-columns:repeat(2,minmax(0,1fr))}
+  .week{grid-template-columns:repeat(2,minmax(0,1fr))}
+  .journey{grid-template-columns:repeat(2,minmax(0,1fr));row-gap:20px}
+  .journey .track,.journey .walker{display:none}
+  .ag{grid-template-columns:72px minmax(0,1fr)}
+  .ag .tag{display:none}
+  .bar{grid-template-columns:minmax(0,1fr)}
+  .matrix{grid-template-columns:minmax(0,1fr)}
+  .matrix .axis{display:none}
+  .brand span{display:none}
+  .brief dl div{grid-template-columns:minmax(0,1fr);gap:2px}
+  .br{grid-template-columns:minmax(0,1fr) 80px;}
+  .br .st-c{grid-column:1/-1}
+  .br.h{display:none}
+}
+</style>
+
+<svg width="0" height="0" style="position:absolute" aria-hidden="true">
+  <symbol id="i-phone" viewBox="0 0 24 24"><rect x="7" y="2.5" width="10" height="19" rx="2.5"/><path d="M11 18.5h2"/></symbol>
+  <symbol id="i-eye" viewBox="0 0 24 24"><path d="M2 12s3.6-7 10-7 10 7 10 7-3.6 7-10 7S2 12 2 12z"/><circle cx="12" cy="12" r="3"/></symbol>
+  <symbol id="i-store" viewBox="0 0 24 24"><path d="M4 10v10h16V10"/><path d="M3 10l2-6h14l2 6z"/><path d="M10 20v-5h4v5"/></symbol>
+  <symbol id="i-chat" viewBox="0 0 24 24"><path d="M4 5h16v11H9l-5 4z"/><path d="M8 9.5h8M8 12.5h5"/></symbol>
+  <symbol id="i-cal" viewBox="0 0 24 24"><rect x="3.5" y="5" width="17" height="15" rx="2"/><path d="M3.5 10h17M8 3v4M16 3v4M9 15l2 2 4-4"/></symbol>
+  <symbol id="i-star" viewBox="0 0 24 24"><path d="M12 3l2.7 5.6 6.1.9-4.4 4.3 1 6.1L12 17l-5.4 2.9 1-6.1L3.2 9.5l6.1-.9z"/></symbol>
+  <symbol id="i-pin" viewBox="0 0 24 24"><path d="M12 21s-7-6.2-7-11.5a7 7 0 0 1 14 0C19 14.8 12 21 12 21z"/><circle cx="12" cy="9.5" r="2.5"/></symbol>
+  <symbol id="i-user" viewBox="0 0 24 24"><circle cx="12" cy="8" r="4"/><path d="M4 21a8 8 0 0 1 16 0"/></symbol>
+  <symbol id="i-users" viewBox="0 0 24 24"><circle cx="9" cy="8" r="3.5"/><path d="M2.5 20a6.5 6.5 0 0 1 13 0"/><path d="M16 4.5a3.5 3.5 0 0 1 0 7M18 14a6 6 0 0 1 3.5 6"/></symbol>
+  <symbol id="i-mega" viewBox="0 0 24 24"><path d="M3 10v4h4l8 5V5L7 10z"/><path d="M18.5 9a4 4 0 0 1 0 6"/></symbol>
+  <symbol id="i-coin" viewBox="0 0 24 24"><circle cx="12" cy="12" r="8.5"/><path d="M14.5 9.5c-.5-1-1.4-1.5-2.5-1.5-1.5 0-2.5.8-2.5 2s1 1.6 2.5 2 2.5.8 2.5 2-1 2-2.5 2c-1.1 0-2-.5-2.5-1.5M12 6.5V8M12 16v1.5"/></symbol>
+  <symbol id="i-check" viewBox="0 0 24 24"><path d="M5 12.5l4.5 4.5L19 7.5"/></symbol>
+  <symbol id="i-x" viewBox="0 0 24 24"><path d="M6 6l12 12M18 6L6 18"/></symbol>
+  <symbol id="i-reels" viewBox="0 0 24 24"><rect x="3" y="3" width="18" height="18" rx="4"/><path d="M3 8h18M8 3l2.5 5M14 3l2.5 5"/><path d="M10.5 11.5v5l4.5-2.5z"/></symbol>
+  <symbol id="i-search" viewBox="0 0 24 24"><circle cx="11" cy="11" r="6.5"/><path d="M16 16l5 5"/></symbol>
+  <symbol id="i-home" viewBox="0 0 24 24"><path d="M3 11l9-7 9 7"/><path d="M5 10v10h14V10"/><path d="M10 20v-5h4v5"/></symbol>
+  <symbol id="i-target" viewBox="0 0 24 24"><circle cx="12" cy="12" r="8.5"/><circle cx="12" cy="12" r="4.5"/><circle cx="12" cy="12" r="1"/></symbol>
+  <symbol id="i-trend" viewBox="0 0 24 24"><path d="M3 17l6-6 4 4 8-8"/><path d="M15 7h6v6"/></symbol>
+  <symbol id="i-timer" viewBox="0 0 24 24"><circle cx="12" cy="13" r="8"/><path d="M12 9v4l2.5 2.5M9 2.5h6"/></symbol>
+  <symbol id="i-arrow" viewBox="0 0 24 24"><path d="M5 12h14M13 6l6 6-6 6"/></symbol>
+  <symbol id="i-left" viewBox="0 0 24 24"><path d="M15 6l-6 6 6 6"/></symbol>
+  <symbol id="i-right" viewBox="0 0 24 24"><path d="M9 6l6 6-6 6"/></symbol>
+  <symbol id="i-fire" viewBox="0 0 24 24"><path d="M12 21c-4 0-7-2.7-7-6.5 0-3.5 2.5-5.5 4-8 .7 2 2 3 3 3.5C12 7 13 4.5 15 3c.5 3 4 5.5 4 10.5 0 4.3-3 7.5-7 7.5z"/></symbol>
+  <symbol id="i-polish" viewBox="0 0 24 24"><rect x="6.5" y="11" width="11" height="10" rx="2.5"/><path d="M9.5 11V8h5v3M10.5 8V3h3v5"/></symbol>
+  <symbol id="i-link" viewBox="0 0 24 24"><path d="M10 14a4 4 0 0 0 5.7 0l3-3a4 4 0 0 0-5.7-5.7l-1 1"/><path d="M14 10a4 4 0 0 0-5.7 0l-3 3a4 4 0 0 0 5.7 5.7l1-1"/></symbol>
+  <symbol id="i-pinpost" viewBox="0 0 24 24"><path d="M9 3h6l-1 6 3 3H7l3-3z"/><path d="M12 12v9"/></symbol>
+  <symbol id="i-bowl" viewBox="0 0 24 24"><path d="M3 11h18a9 9 0 0 1-18 0z"/><path d="M14 3l-3 8M19 4l-5 7"/></symbol>
+  <symbol id="i-coffee" viewBox="0 0 24 24"><path d="M4 9h12v6a5 5 0 0 1-5 5H9a5 5 0 0 1-5-5z"/><path d="M16 11h1.5a2.5 2.5 0 0 1 0 5H16"/><path d="M8 3c0 1.5 1.5 1.5 1.5 3M12 3c0 1.5 1.5 1.5 1.5 3"/></symbol>
+  <symbol id="i-villa" viewBox="0 0 24 24"><path d="M2 20h20"/><path d="M4 20V11l7-5 7 5v9"/><path d="M9 20v-5h4v5"/><path d="M20 20v-6a2 2 0 0 0-2-2"/></symbol>
+  <symbol id="i-chair" viewBox="0 0 24 24"><path d="M7 4v9h10"/><path d="M5 13h14v3H5z"/><path d="M7 16v4M17 16v4"/></symbol>
+  <symbol id="i-paper" viewBox="0 0 24 24"><path d="M6 3h9l4 4v14H6z"/><path d="M15 3v4h4M9 12h7M9 16h7"/></symbol>
+  <symbol id="i-menu" viewBox="0 0 24 24"><path d="M4 7h16M4 12h16M4 17h10"/></symbol>
+  <symbol id="i-expand" viewBox="0 0 24 24"><path d="M4 9V4h5M20 9V4h-5M4 15v5h5M20 15v5h-5"/></symbol>
+  <symbol id="i-layers" viewBox="0 0 24 24"><path d="M12 3l9 5-9 5-9-5z"/><path d="M3 13l9 5 9-5"/></symbol>
+  <symbol id="i-plus" viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></symbol>
+</svg>
+
+<header class="top">
+  <div class="brand"><b>BBCON 2026</b><span>Business Growth · Andrew Ongso</span></div>
+  <div class="top-r">
+    <div class="timer" id="timer" hidden>
+      <svg class="i"><use href="#i-timer"/></svg><span id="tm">05:00</span>
+      <button type="button" data-min="3">3m</button><button type="button" data-min="5">5m</button><button type="button" data-min="10">10m</button>
+      <button type="button" id="tgo">Mulai</button>
+    </div>
+    <span class="count" id="count">1 / 23</span>
+    <button class="iconbtn" id="fs" type="button" aria-label="Layar penuh"><svg class="i"><use href="#i-expand"/></svg></button>
+    <button class="iconbtn" id="menuBtn" type="button"><svg class="i"><use href="#i-menu"/></svg>Slide</button>
+  </div>
+</header>
+
+<main class="deck" id="deck">
+
+<!-- 1 COVER -->
+<section class="slide" data-title="They visited your profile" data-sec="Pembuka">
+ <div class="inner cover">
+  <div>
+   <p class="eyebrow a">From Profile Visit to Booking</p>
+   <h1 class="a" style="--i:1">They visited your profile. <span class="q">Why didn't they book?</span></h1>
+   <p class="lead a" style="--i:2">Sharing dari pengalaman kami di BAIK Digital tentang kenapa boost post sering terasa buang uang, dan apa yang bisa kita benahi supaya profile visit jadi booking.</p>
+   <div class="byline a" style="--i:3">
+     <span class="ic"><svg class="i"><use href="#i-user"/></svg></span>
+     <div><div class="who">Andrew Ongso</div><div class="muted small">Founder, BAIK Digital</div></div>
+     <span class="tag">60–75 menit · teori + workshop</span>
+   </div>
+  </div>
+  <div class="funnel-art a" style="--i:2" aria-hidden="true">
+    <div class="lvl"><svg class="i"><use href="#i-reels"/></svg><div>Lihat reels<small>tertarik</small></div></div>
+    <div class="lvl"><svg class="i"><use href="#i-store"/></svg><div>Masuk profil<small>penasaran</small></div></div>
+    <div class="lvl"><svg class="i"><use href="#i-star"/></svg><div>Yakin<small>percaya</small></div></div>
+    <div class="lvl"><svg class="i"><use href="#i-cal"/></svg><div>Booking</div></div>
+  </div>
+ </div>
+</section>
+
+<!-- 2 AGENDA -->
+<section class="slide" data-title="Peta sesi hari ini" data-sec="Pembuka">
+ <div class="inner">
+  <p class="eyebrow a">Peta sesi</p>
+  <h2 class="a" style="--i:1">Harapannya, teman-teman pulang bawa 3 hal yang bisa langsung dipraktikkan.</h2>
+  <div class="agenda mt">
+   <div class="ag a" style="--i:2"><span class="mono">00–05</span><b>Pemanasan: siapa yang pernah boost?</b><span class="tag">Interaktif</span></div>
+   <div class="ag a" style="--i:3"><span class="mono">05–20</span><b>Kenapa profile visit nggak jadi booking</b><span class="tag">Funnel</span></div>
+   <div class="ag a" style="--i:4"><span class="mono">20–32</span><b>2 study case: supplier mie & villa premium</b><span class="tag">Case</span></div>
+   <div class="ag ws a" style="--i:5"><span class="mono">32–45</span><b>Workshop 1: Siapkan etalase (bio, highlight, pinned)</b><span class="tag">Hands-on</span></div>
+   <div class="ag ws a" style="--i:6"><span class="mono">45–60</span><b>Workshop 2: Framework konten dari review Google Maps</b><span class="tag">Hands-on</span></div>
+   <div class="ag ws a" style="--i:7"><span class="mono">60–68</span><b>Workshop 3: Budget Rp30rb & baca angka</b><span class="tag">Hands-on</span></div>
+   <div class="ag a" style="--i:8"><span class="mono">68–75</span><b>Rencana 7 hari + tanya jawab</b><span class="tag">Action</span></div>
+  </div>
+ </div>
+</section>
+
+<!-- 2b GLOSSARY -->
+<section class="slide" data-title="Istilah yang akan sering muncul" data-sec="Pembuka">
+ <div class="inner">
+  <p class="eyebrow a">Biar kita satu bahasa</p>
+  <h2 class="a" style="--i:1">Beberapa istilah yang akan sering muncul hari ini.</h2>
+  <div class="g3 mt">
+   <div class="card a" style="--i:2"><h3>Reach</h3><p class="muted mt-s">Jumlah orang yang melihat konten atau iklan kita.</p></div>
+   <div class="card a" style="--i:3"><h3>Profile visit</h3><p class="muted mt-s">Orang yang mengklik dan membuka profil Instagram kita.</p></div>
+   <div class="card a" style="--i:4"><h3>Biaya per profile visit</h3><p class="muted mt-s">Uang iklan dibagi jumlah profile visit. Makin kecil, makin hemat.</p></div>
+   <div class="card a" style="--i:5"><h3>ICP</h3><p class="muted mt-s">Gambaran pelanggan ideal kita. Misalnya ibu yang sibuk dan mau treatment di rumah.</p></div>
+   <div class="card a" style="--i:6"><h3>Key message</h3><p class="muted mt-s">Pesan utama yang mau kita sampaikan, dan bisa kita buktikan.</p></div>
+   <div class="card a" style="--i:7"><h3>CTA</h3><p class="muted mt-s">Ajakan untuk bertindak, misalnya "booking via WA".</p></div>
+  </div>
+ </div>
+</section>
+
+<!-- 3 POLL -->
+<section class="slide" data-title="Siapa yang pernah boost post?" data-sec="Pembuka">
+ <div class="inner">
+  <p class="eyebrow a">Sebelum mulai</p>
+  <h2 class="a" style="--i:1">Siapa yang pernah boost post di Instagram?</h2>
+  <p class="lead a" style="--i:2">Tap kartu setiap ada yang angkat tangan.</p>
+  <div class="poll mt">
+    <button type="button" class="a" style="--i:3" data-poll><span class="ic good"><svg class="i"><use href="#i-trend"/></svg></span><b>Pernah, hasilnya oke</b><span class="num">0</span></button>
+    <button type="button" class="a" style="--i:4" data-poll><span class="ic bad"><svg class="i"><use href="#i-fire"/></svg></span><b>Pernah, rasanya bakar uang</b><span class="num">0</span></button>
+    <button type="button" class="a" style="--i:5" data-poll><span class="ic gold"><svg class="i"><use href="#i-search"/></svg></span><b>Belum pernah, takut rugi</b><span class="num">0</span></button>
+  </div>
+ </div>
+</section>
+
+<!-- 4 PROBLEM -->
+<section class="slide" data-title="Masalahnya" data-sec="Kenapa nggak convert" data-enter="count">
+ <div class="inner">
+  <p class="eyebrow a">Mungkin pernah ngalamin</p>
+  <h2 class="a" style="--i:1">Boost sudah jalan, profile visit naik, tapi WhatsApp masih sepi.</h2>
+  <div class="meters mt">
+   <div class="meter a" style="--i:2"><span class="ic gold"><svg class="i"><use href="#i-coin"/></svg></span><div class="v" data-count="300000" data-fmt="rp">Rp0</div><div class="muted small">Spend 10 hari</div></div>
+   <div class="meter a" style="--i:3"><span class="ic"><svg class="i"><use href="#i-store"/></svg></span><div class="v" data-count="1120">0</div><div class="muted small">Profile visit</div></div>
+   <div class="meter a" style="--i:4"><span class="ic"><svg class="i"><use href="#i-chat"/></svg></span><div class="v" data-count="3">0</div><div class="muted small">Chat masuk</div></div>
+   <div class="meter zero a" style="--i:5"><span class="ic bad"><svg class="i"><use href="#i-cal"/></svg></span><div class="v">0</div><div class="muted small">Booking</div></div>
+  </div>
+  <p class="punch a" style="--i:6">Biasanya kita lalu mikir <em class="hl">iklan IG nggak cocok buat bisnis kita</em>. Padahal iklannya sudah berhasil bawa orang ke profil.</p>
+  <p class="note"><svg class="i"><use href="#i-paper"/></svg>Angka ilustrasi.</p>
+ </div>
+</section>
+
+<!-- 5 ANALOGY -->
+<section class="slide" data-title="Yang lihat iklan kamu itu manusia" data-sec="Kenapa nggak convert">
+ <div class="inner">
+  <p class="eyebrow a">Analogi</p>
+  <h2 class="a" style="--i:1">Yang lihat iklan kita itu orang, dan orang perlu diyakinkan.</h2>
+  <p class="lead a" style="--i:2">Coba bayangkan Instagram kita sebagai salon. Boost post membuat lebih banyak orang lewat di depan pintu. Masuk atau tidaknya tergantung apa yang mereka lihat.</p>
+  <div class="journey mt a" style="--i:3" id="journey">
+    <div class="track"></div><div class="walker"></div>
+    <button type="button" class="station" data-j="0" aria-pressed="true"><span class="ring"><svg class="i"><use href="#i-eye"/></svg></span><span class="lab">Lewat depan</span><span class="sub">Lihat reels</span></button>
+    <button type="button" class="station" data-j="1" aria-pressed="false"><span class="ring"><svg class="i"><use href="#i-store"/></svg></span><span class="lab">Masuk ke dalam</span><span class="sub">Klik profil</span></button>
+    <button type="button" class="station" data-j="2" aria-pressed="false"><span class="ring"><svg class="i"><use href="#i-chair"/></svg></span><span class="lab">Ngobrol di meja depan</span><span class="sub">Baca bio, highlight, pinned</span></button>
+    <button type="button" class="station" data-j="3" aria-pressed="false"><span class="ring"><svg class="i"><use href="#i-cal"/></svg></span><span class="lab">Booking</span><span class="sub">Chat WA / DM</span></button>
+  </div>
+  <div class="duo">
+    <div class="card"><h3><span class="ic"><svg class="i"><use href="#i-store"/></svg></span>Di salon</h3><p id="jSalon"></p></div>
+    <div class="card"><h3><span class="ic"><svg class="i"><use href="#i-phone"/></svg></span>Di Instagram</h3><p id="jIg"></p><div class="q" id="jQ"></div></div>
+  </div>
+ </div>
+</section>
+
+<!-- 6 SIMULATOR -->
+<section class="slide" data-title="Simulator: bocornya di mana?" data-sec="Kenapa nggak convert">
+ <div class="inner">
+  <p class="eyebrow a">Simulasi</p>
+  <h2 class="a" style="--i:1">Dengan budget yang sama, hasilnya bisa beda jauh.</h2>
+  <p class="lead a" style="--i:2">Misalkan spend Rp300.000 dan 20.000 orang melihat reels kita. Coba geser dua hal yang bisa kita kontrol.</p>
+  <div class="sim mt">
+    <div class="ctrl card a" style="--i:3">
+      <div>
+        <div class="hd"><b>1. Konten / reels</b><span class="lvltxt" id="aTxt"></span></div>
+        <input type="range" id="sA" min="1" max="5" value="2" aria-label="Kualitas konten">
+        <p class="hint">Relevan buat ICP, bikin penasaran, ngajak lihat profil.</p>
+      </div>
+      <div>
+        <div class="hd"><b>2. Etalase profil</b><span class="lvltxt" id="bTxt"></span></div>
+        <input type="range" id="sB" min="1" max="5" value="1" aria-label="Kesiapan etalase">
+        <p class="hint">Bio jelas, highlight lengkap, pinned berisi bukti.</p>
+      </div>
+    </div>
+    <div class="a" style="--i:4">
+      <div class="bars">
+        <div class="bar"><span class="lb"><svg class="i"><use href="#i-eye"/></svg>Lihat reels</span><div class="tr"><div class="fill" style="width:100%"><span>20.000</span></div></div></div>
+        <div class="bar"><span class="lb"><svg class="i"><use href="#i-store"/></svg>Profile visit</span><div class="tr"><div class="fill" id="fV"><span></span></div></div></div>
+        <div class="bar"><span class="lb"><svg class="i"><use href="#i-chat"/></svg>Chat masuk</span><div class="tr"><div class="fill" id="fC"><span></span></div></div></div>
+        <div class="bar b4"><span class="lb"><svg class="i"><use href="#i-cal"/></svg>Booking</span><div class="tr"><div class="fill" id="fB"><span></span></div></div></div>
+      </div>
+      <div class="cpb"><span><b>Biaya per booking</b><br><span class="small">Rp300.000 ÷ jumlah booking</span></span><span class="v" id="cpb"></span></div>
+      <p class="note"><svg class="i"><use href="#i-paper"/></svg>Model ilustrasi untuk menunjukkan efek kali-kalian, bukan data riil.</p>
+    </div>
+  </div>
+ </div>
+</section>
+
+<!-- 7 MATRIX -->
+<section class="slide" data-title="2 variabel yang bisa kamu kontrol" data-sec="Kenapa nggak convert">
+ <div class="inner">
+  <p class="eyebrow a">Diagnosis</p>
+  <h2 class="a" style="--i:1">Ada 2 hal yang bisa kita kontrol. Kira-kira kita di kotak mana?</h2>
+  <div class="matrix mt a" style="--i:2">
+    <div></div><div class="axis">Etalase belum siap</div><div class="axis">Etalase siap</div>
+    <div class="axis y">Konten kuat</div>
+    <button type="button" class="quad" aria-pressed="false"><span class="st"><svg class="i"><use href="#i-store"/></svg>Ramai, tapi nggak ada yang booking</span><span class="muted small">Orang masuk, lihat-lihat, keluar.</span><span class="more">Uang iklan sudah berhasil bawa orang. Yang bocor itu profilnya. Benerin bio, highlight, pinned dulu sebelum tambah budget.</span></button>
+    <button type="button" class="quad win" aria-pressed="false"><span class="st"><svg class="i"><use href="#i-trend"/></svg>Siap di-scale</span><span class="muted small">Konten narik, profil meyakinkan.</span><span class="more">Di sini baru budget boleh dinaikkan. Tambah jumlah konten pemenang, bukan naikkan budget satu konten.</span></button>
+    <div class="axis y">Konten lemah</div>
+    <button type="button" class="quad burn" aria-pressed="false"><span class="st"><svg class="i"><use href="#i-fire"/></svg>Bakar uang</span><span class="muted small">Nggak ada yang mampir, yang mampir pun pergi.</span><span class="more">Stop boost dulu. Mulai dari etalase (gratis), baru bikin konten.</span></button>
+    <button type="button" class="quad" aria-pressed="false"><span class="st"><svg class="i"><use href="#i-home"/></svg>Toko bagus di gang sepi</span><span class="muted small">Profil oke, tapi yang mampir sedikit dan mahal.</span><span class="more">Masalahnya di konten: belum relevan buat ICP atau nggak bikin penasaran. Bikin konten baru, jangan naikkan budget.</span></button>
+  </div>
+ </div>
+</section>
+
+<!-- 8 METRICS DIAGNOSIS -->
+<section class="slide" data-title="Baca angkanya" data-sec="Kenapa nggak convert">
+ <div class="inner">
+  <p class="eyebrow a">Dari angka</p>
+  <h2 class="a" style="--i:1">Dari angkanya, kita bisa tahu bagian mana yang perlu dibenahi dulu.</h2>
+  <div class="diag mt">
+    <div class="card symptom a" style="--i:2">
+      <span class="ic"><svg class="i"><use href="#i-reels"/></svg></span>
+      <h3>Biaya per profile visit mahal</h3>
+      <p class="sig">Biaya per kunjungan profil &gt; 0,25% × rata-rata transaksi<br><span class="muted">Contoh: transaksi Rp250rb → maksimal Rp625</span></p>
+      <p class="muted">Orang lihat konten, tapi nggak tertarik masuk.</p>
+      <div class="fix"><svg class="i" style="color:var(--accent)"><use href="#i-arrow"/></svg><p><b>Benahi kontennya dulu.</b> Ganti hook, ganti angle, cek apakah bicara ke ICP yang benar.</p></div>
+    </div>
+    <div class="card symptom a" style="--i:3">
+      <span class="ic"><svg class="i"><use href="#i-store"/></svg></span>
+      <h3>Visit murah & banyak, chat sedikit</h3>
+      <p class="sig">Profile visit → chat di bawah target kamu</p>
+      <p class="muted">Orang sudah masuk, tapi nggak yakin.</p>
+      <div class="fix"><svg class="i" style="color:var(--accent)"><use href="#i-arrow"/></svg><p><b>Benahi etalasenya dulu.</b> Mulai dari bio, highlight, dan pinned. Budget belum perlu dinaikkan.</p></div>
+    </div>
+  </div>
+ </div>
+</section>
+
+<!-- 9 CASE NAGA KEMBAR: SETUP -->
+<section class="slide" data-title="Case: Cap Naga Kembar, setup" data-sec="Study case">
+ <div class="inner">
+  <div class="case-head a">
+    <span class="ic"><svg class="i"><use href="#i-bowl"/></svg></span>
+    <div>
+      <p class="eyebrow" style="margin:0 0 6px">Study case 1 · B2B supplier</p>
+      <h2>Cap Naga Kembar: supplier mie basah, Medan</h2>
+      <div class="chips"><span class="chip"><svg class="i"><use href="#i-users"/></svg>Pembeli: usaha kuliner, grosir</span><span class="chip"><svg class="i"><use href="#i-target"/></svg>Tujuan: chat WA grosir</span></div>
+    </div>
+  </div>
+  <div class="ba mt-s a" style="--i:1">
+    <div class="card"><span class="tag">9 Juni 2025 · mulai</span><div class="ba-n"><b>15</b> post <b>55</b> follower</div></div>
+    <svg class="i ba-arr"><use href="#i-arrow"/></svg>
+    <div class="card" style="background:var(--accent-soft);border-color:transparent"><span class="tag">November 2026</span><div class="ba-n"><b>42</b> post <b style="color:var(--accent)">20,8rb</b> follower</div></div>
+  </div>
+  <div class="g3 mt-s">
+    <div class="card a" style="--i:2">
+      <h3 style="margin-bottom:10px">Bio yang tiap barisnya ada fungsinya</h3>
+      <div class="anat">
+        <div><span>Supplier mie basah</span><em>WHO / apa</em></div>
+        <div><span>Sejak 1960</span><em>Bukti</em></div>
+        <div><span>Medan, kirim seluruh Sumatera</span><em>Value</em></div>
+        <div><span>Order H-1</span><em>Cara pesan</em></div>
+        <div><span>WA (GROSIR) + Linktree</span><em>CTA + filter</em></div>
+      </div>
+    </div>
+    <div class="card a" style="--i:3">
+      <h3 style="margin-bottom:10px">Highlight yang menjawab sebelum ditanya</h3>
+      <div class="anat">
+        <div><span>Cara Pesan</span><em>Info</em></div>
+        <div><span>Update Harga</span><em>Info</em></div>
+        <div><span>Client</span><em>Social proof</em></div>
+        <div><span>Custom</span><em>Demo value</em></div>
+        <div><span>Libur / jadwal</span><em>Info</em></div>
+      </div>
+    </div>
+    <div class="card a" style="--i:4">
+      <h3 style="margin-bottom:10px">Reels yang berangkat dari key message</h3>
+      <div class="anat">
+        <div><span>Key message</span><em>Keraguan buyer</em></div>
+        <div><span>Compile footage</span><em>Produksi</em></div>
+        <div><span>Voiceover</span><em>Produksi</em></div>
+        <div><span>Boost ke profile visit</span><em>Distribusi</em></div>
+      </div>
+      <p class="muted small" style="margin-top:10px">Produksinya sederhana. Cukup footage proses produksi dan pengiriman, lalu pesannya disampaikan lewat voiceover.</p>
+    </div>
+  </div>
+ </div>
+</section>
+
+<!-- 10 CASE NAGA KEMBAR: NUMBERS -->
+<section class="slide" data-title="Case: Cap Naga Kembar, angka" data-sec="Study case" data-enter="count">
+ <div class="inner">
+  <p class="eyebrow a">Study case 1 · Hasil 3 bulan pertama</p>
+  <h2 class="a" style="--i:1">Dari akun dengan 55 follower, order naik hampir 2× dalam 3 bulan.</h2>
+  <div class="meters mt-s">
+   <div class="meter a" style="--i:2"><span class="ic"><svg class="i"><use href="#i-eye"/></svg></span><div class="v" data-count="611266">0</div><div class="muted small">Total reach</div></div>
+   <div class="meter a" style="--i:3"><span class="ic"><svg class="i"><use href="#i-store"/></svg></span><div class="v" data-count="36328">0</div><div class="muted small">Profile visit</div></div>
+   <div class="meter a" style="--i:4"><span class="ic"><svg class="i"><use href="#i-chat"/></svg></span><div class="v" data-count="420">0</div><div class="muted small">Chat WA asli</div></div>
+   <div class="meter a" style="--i:5;background:var(--clay);border-color:var(--clay);color:var(--accent-ink)"><span class="ic" style="background:var(--surface);"><svg class="i"><use href="#i-cal"/></svg></span><div class="v" data-count="159">0</div><div class="small" style="opacity:.85">Total order</div></div>
+  </div>
+  <div class="tbl-wrap mt-s a" style="--i:6">
+   <table class="nt">
+    <thead><tr><th>Tahap</th><th>9–30 Jun</th><th>Jul</th><th>Agu</th></tr></thead>
+    <tbody>
+     <tr><td>Reach</td><td>81.708</td><td>200.759</td><td>328.799</td></tr>
+     <tr><td>Profile visit</td><td>6.133</td><td>11.339</td><td>18.856</td></tr>
+     <tr class="cv"><td>Reach → visit</td><td>7,5%</td><td>5,6%</td><td>5,7%</td></tr>
+     <tr><td>Tap link (Linktree)</td><td>917</td><td>1.153</td><td>1.701</td></tr>
+     <tr class="cv"><td>Visit → tap link</td><td>15,0%</td><td>10,2%</td><td>9,0%</td></tr>
+     <tr><td>Chat WA asli</td><td>95</td><td>140</td><td>185</td></tr>
+     <tr><td>Order</td><td>35</td><td>57</td><td>67</td></tr>
+     <tr class="cv"><td>Chat → order</td><td>36,8%</td><td>40,7%</td><td>36,2%</td></tr>
+    </tbody>
+   </table>
+  </div>
+  <div class="case-foot a" style="--i:7">
+    <div class="slots">
+      <div class="slot"><div class="k">Cost / profile visit</div><div class="val">Rp150</div><div class="muted small">Batas 0,25%: Rp750–1.250</div></div>
+      <div class="slot"><div class="k">Cost / order</div><div class="val">±Rp34rb</div><div class="muted small">Spend ±Rp65rb/hari</div></div>
+      <div class="slot"><div class="k">Profit / order</div><div class="val">Rp120–200rb</div><div class="muted small">40% × basket Rp300–500rb</div></div>
+      <div class="slot" style="border-style:solid;border-color:var(--good);background:var(--good-soft)"><div class="k">Order pertama</div><div class="val" style="color:var(--good)">Sudah untung 3,5–5,8×</div><div class="muted small">Repeat order = profit bersih</div></div>
+    </div>
+    <div class="lesson"><div class="k">Kalau ini salon kamu</div>Hitung dari pelanggan yang balik tiap bulan, bukan dari booking pertama. Kalau booking pertama sudah balik modal, setiap kunjungan berikutnya untung.</div>
+  </div>
+  <p class="note"><svg class="i"><use href="#i-paper"/></svg>Data akun Instagram capnagakembar.id, Juni–Agustus 2025. Juni dihitung dari 9 Juni. Cost per profile visit dari data iklan. Cost per order dihitung dari spend harian × 84 hari dibagi total order (termasuk organik).</p>
+ </div>
+</section>
+
+<!-- 10 CASE VILLA -->
+<section class="slide" data-title="Case: Villa Spring River" data-sec="Study case">
+ <div class="inner">
+  <div class="case-head a">
+    <span class="ic"><svg class="i"><use href="#i-villa"/></svg></span>
+    <div>
+      <p class="eyebrow" style="margin:0 0 6px">Study case 2 · High ticket</p>
+      <h2>Spring River Villa, Cisarua</h2>
+      <div class="chips"><span class="chip"><svg class="i"><use href="#i-coin"/></svg>Rp5–7 juta / malam</span><span class="chip"><svg class="i"><use href="#i-users"/></svg>Tamu: keluarga & rombongan, 6–9 orang</span><span class="chip"><svg class="i"><use href="#i-target"/></svg>Tujuan: booking</span></div>
+    </div>
+  </div>
+  <div class="ba mt-s a" style="--i:1">
+    <div class="card"><span class="tag">28 April 2026 · sebelum iklan</span><div class="ba-n"><b>42</b> post <b>346</b> follower</div></div>
+    <svg class="i ba-arr"><use href="#i-arrow"/></svg>
+    <div class="card" style="background:var(--accent-soft);border-color:transparent"><span class="tag">November 2026</span><div class="ba-n"><b>45</b> post <b style="color:var(--accent)">17,8rb</b> follower</div></div>
+  </div>
+  <div class="g3 mt-s">
+    <div class="card a" style="--i:2">
+      <h3 style="margin-bottom:10px">Key message iklan</h3>
+      <p style="font-family:var(--f-display);font-weight:600;font-size:1.5rem;line-height:1.15;color:var(--accent)">Private. Tidak berbagi fasilitas dengan tamu lain.</p>
+      <p class="muted small" style="margin-top:10px">Satu pesan yang paling dicari tamu villa premium, dan bisa langsung dibuktikan di video: satu hektar, satu kolam, hanya untuk rombongan kamu.</p>
+    </div>
+    <div class="card a" style="--i:3">
+      <h3 style="margin-bottom:10px">Bio yang langsung menunjukkan positioning</h3>
+      <div class="anat">
+        <div><span>Nature meets luxury</span><em>Positioning</em></div>
+        <div><span>3BR, 1 hektar, natural spring pool</span><em>Difference</em></div>
+        <div><span>More than a stay</span><em>Janji</em></div>
+        <div><span>Bookings: website + 2 link</span><em>CTA</em></div>
+      </div>
+    </div>
+    <div class="card a" style="--i:4">
+      <h3 style="margin-bottom:10px">Highlight FAQ yang menjawab sebelum ditanya</h3>
+      <div class="anat">
+        <div><span>3 kamar, nyaman 6 tamu</span><em>Kapasitas</em></div>
+        <div><span>Extra bed sampai 9 tamu</span><em>Kapasitas</em></div>
+        <div><span>Baby crib tersedia</span><em>Keluarga</em></div>
+      </div>
+      <p class="muted small" style="margin-top:10px">Pertanyaan pertama rombongan biasanya "muat berapa orang?", dan itu sudah terjawab sebelum mereka chat.</p>
+    </div>
+  </div>
+  <div class="mt-s a" style="--i:5">
+    <div class="lesson"><div class="k">Kalau ini salon kamu</div>Cari satu hal yang customer kamu peduli banget dan bisa kamu buktikan di video. Misalnya ruang privat, satu terapis dari awal sampai selesai, atau alat sekali pakai.</div>
+  </div>
+ </div>
+</section>
+
+<!-- 11b CASE VILLA: NUMBERS -->
+<section class="slide" data-title="Case: Spring River, angka" data-sec="Study case" data-enter="count">
+ <div class="inner">
+  <p class="eyebrow a">Study case 2 · Hasil Mei–Agustus</p>
+  <h2 class="a" style="--i:1">Spend iklan Rp23 juta, dan dari direct booking saja sudah kembali sekitar 2,5×.</h2>
+  <div class="meters mt-s">
+   <div class="meter a" style="--i:2"><span class="ic gold"><svg class="i"><use href="#i-coin"/></svg></span><div class="v" data-count="23250435" data-fmt="jt">Rp0</div><div class="muted small">Spend iklan, Mei–Agu</div></div>
+   <div class="meter a" style="--i:3"><span class="ic"><svg class="i"><use href="#i-chat"/></svg></span><div class="v" data-count="730">0</div><div class="muted small">Chat masuk · Rp31.850 / chat</div></div>
+   <div class="meter a" style="--i:4;background:var(--clay);border-color:var(--clay);color:var(--accent-ink)"><span class="ic" style="background:var(--surface)"><svg class="i"><use href="#i-cal"/></svg></span><div class="v" data-count="59000000" data-fmt="jt">Rp0</div><div class="small" style="opacity:.85">Direct booking · 2,5× spend</div></div>
+   <div class="meter a" style="--i:5"><span class="ic"><svg class="i"><use href="#i-trend"/></svg></span><div class="v" data-count="250274774" data-fmt="jt">Rp0</div><div class="muted small">Total revenue (incl. Booking.com) · 10,8×</div></div>
+  </div>
+  <div class="card mt-s a" style="--i:6;padding:16px 18px 10px">
+    <div class="row" style="justify-content:space-between"><b>Chat masuk per hari</b><span class="muted small">Arahkan kursor ke batang</span></div>
+    <div class="chart" id="vChart"><div class="ctip" id="vTip" hidden></div></div>
+  </div>
+  <div class="tbl-wrap mt-s a" style="--i:7">
+   <table class="nt">
+    <thead><tr><th>Bulan</th><th>Chat masuk</th><th>Booking.com</th><th>Direct</th><th>Total</th></tr></thead>
+    <tbody>
+     <tr><td>Mei*</td><td>103</td><td>Rp53.576.489</td><td>Rp30.000.000</td><td>Rp83.576.489</td></tr>
+     <tr><td>Juni</td><td>319</td><td>Rp63.890.227</td><td>–</td><td>Rp63.890.227</td></tr>
+     <tr><td>Juli</td><td>208</td><td>Rp57.446.666</td><td>Rp22.000.000</td><td>Rp79.446.666</td></tr>
+     <tr><td>Agustus</td><td>100</td><td>Rp16.361.392</td><td>Rp7.000.000</td><td>Rp23.361.392</td></tr>
+    </tbody>
+   </table>
+  </div>
+  <p class="note"><svg class="i"><use href="#i-paper"/></svg>*Chat Mei dihitung mulai 21 Mei. Spend dari Meta Ads Manager, 1 Mei–31 Agu 2026. Revenue & chat: data internal Spring River Villa.</p>
+ </div>
+</section>
+
+<!-- 12 PATTERN -->
+<section class="slide" data-title="Benang merah 2 case" data-sec="Study case">
+ <div class="inner">
+  <p class="eyebrow a">Kalau dilihat lagi</p>
+  <h2 class="a" style="--i:1">Bisnisnya beda, tapi polanya mirip.</h2>
+  <div class="tbl-wrap mt a" style="--i:2">
+   <table>
+    <thead><tr><th></th><th>Mie (B2B)</th><th>Villa (high ticket)</th><th>Salon kamu</th></tr></thead>
+    <tbody>
+     <tr><td>Key message konten</td><td>Jawab keraguan buyer</td><td>Private, tidak berbagi fasilitas</td><td class="muted">?</td></tr>
+     <tr><td>Profil tugasnya</td><td>Buktikan sudah dipakai</td><td>Jawab kapasitas & fasilitas</td><td class="muted">?</td></tr>
+     <tr><td>Aksi yang dituju</td><td>WA grosir via Linktree</td><td>Booking via website</td><td class="muted">?</td></tr>
+     <tr><td>Yang diukur</td><td>Chat → order</td><td>Visit → booking</td><td class="muted">?</td></tr>
+    </tbody>
+   </table>
+  </div>
+  <p class="punch a" style="--i:3">Kolom terakhir itu yang akan kita isi bareng di workshop.</p>
+ </div>
+</section>
+
+<!-- 13 WORKSHOP DIVIDER -->
+<section class="slide" data-title="Workshop: giliran kamu" data-sec="Workshop">
+ <div class="inner divider">
+  <p class="eyebrow a">Mini workshop · 35 menit</p>
+  <div class="big a" style="--i:1">Sekarang<br><span>kita coba bareng.</span></div>
+  <p class="lead a" style="--i:2">Buka Instagram bisnis kamu. Siapkan kertas atau notes di HP. Ngobrol juga sama satu meja, kalian sama-sama pemilik salon.</p>
+  <div class="prep a" style="--i:3">
+   <span class="chip"><svg class="i"><use href="#i-phone"/></svg>HP, IG bisnis terbuka</span>
+   <span class="chip"><svg class="i"><use href="#i-paper"/></svg>Kertas / notes</span>
+   <span class="chip"><svg class="i"><use href="#i-star"/></svg>Google Maps salon kamu & kompetitor</span>
+  </div>
+ </div>
+</section>
+
+<!-- 14 BIO BUILDER -->
+<section class="slide" data-title="W1: Tulis ulang bio" data-sec="Workshop" data-timer>
+ <div class="inner">
+  <p class="eyebrow a">Workshop 1 · Etalase</p>
+  <h2 class="a" style="--i:1">Dalam 5 detik, bio perlu menjawab "ini buat aku nggak?"</h2>
+  <div class="formula mt-s a" style="--i:2"><span class="p">WHO</span><span class="op">+</span><span class="p">DIFFERENCE / VALUE</span><span class="op">+</span><span class="p">BUKTI</span><span class="op">+</span><span class="p">CTA</span></div>
+  <div class="split mt">
+    <div class="stack a" style="--i:3">
+      <div class="inrow">
+        <label class="f">Nama bisnis<input class="t" id="bName" value="Rumi Nail Studio"></label>
+        <label class="f">Kategori<input class="t" id="bCat" value="Nail salon · Denpasar"></label>
+      </div>
+      <label class="f">WHO: untuk siapa, spesifik<input class="t" id="bWho" value="Nail art untuk ibu & wanita karier di Renon"></label>
+      <label class="f">Difference / value: kenapa kamu<input class="t" id="bVal" value="Gel tahan 3 minggu, garansi 7 hari"></label>
+      <label class="f">Bukti singkat<input class="t" id="bProof" value="1.200+ klien · rating 4.9 di Google"></label>
+      <label class="f">CTA<input class="t" id="bCta" value="Booking via WA di bawah ini"></label>
+      <div class="row"><span class="charc" id="bCount"></span><span class="muted small">Contoh bisnis fiktif. Ganti dengan punya kamu.</span></div>
+    </div>
+    <div class="a" style="--i:4">
+      <div class="phone" aria-label="Pratinjau profil Instagram">
+        <div class="ig-top"><div class="ig-av"><div><svg class="i"><use href="#i-polish"/></svg></div></div><div class="ig-stats"><div><b>86</b>post</div><div><b>3.4rb</b>follower</div><div><b>210</b>following</div></div></div>
+        <div class="ig-name" id="pName"></div>
+        <div class="ig-cat" id="pCat"></div>
+        <div class="ig-bio" id="pBio"></div>
+        <div class="ig-link"><svg class="i"><use href="#i-link"/></svg>Link booking WhatsApp</div>
+        <div class="ig-btns"><span class="pri">Follow</span><span>WhatsApp</span></div>
+        <div class="ig-hl"><div><i>Rp</i>Pricelist</div><div><i><svg class="i"><use href="#i-star"/></svg></i>Testimoni</div><div><i><svg class="i"><use href="#i-polish"/></svg></i>Before–After</div><div><i><svg class="i"><use href="#i-pin"/></svg></i>Lokasi</div><div><i><svg class="i"><use href="#i-cal"/></svg></i>Booking</div></div>
+        <div class="ig-grid"><div class="pin">Review Google 4.9</div><div class="pin">Before–after</div><div class="pin">Video testimoni</div><div></div><div></div><div></div></div>
+      </div>
+    </div>
+  </div>
+ </div>
+</section>
+
+<!-- 15 HIGHLIGHT & PINNED CHECKLIST -->
+<section class="slide" data-title="W1: Audit highlight & pinned" data-sec="Workshop" data-timer>
+ <div class="inner">
+  <p class="eyebrow a">Workshop 1 · Etalase</p>
+  <h2 class="a" style="--i:1">Centang yang sudah ada di profil kamu sekarang.</h2>
+  <div class="split mt" style="align-items:start">
+    <div class="g2 a" style="--i:2;gap:14px">
+      <div class="checks">
+        <b class="small muted" style="text-transform:uppercase;letter-spacing:.08em">Bio</b>
+        <label class="ck"><input type="checkbox" data-ck><span>WHO jelas<small>Orang langsung tahu ini buat dia</small></span></label>
+        <label class="ck"><input type="checkbox" data-ck><span>Bedanya / value jelas<small>Bukan "nail art terbaik"</small></span></label>
+        <label class="ck"><input type="checkbox" data-ck><span>Ada bukti angka<small>Jumlah klien, rating</small></span></label>
+        <label class="ck"><input type="checkbox" data-ck><span>CTA + link WA<small>Satu langkah ke chat</small></span></label>
+        <b class="small muted" style="text-transform:uppercase;letter-spacing:.08em;margin-top:6px">Pinned post</b>
+        <label class="ck"><input type="checkbox" data-ck><span>3 pinned isinya bukti<small>Review, before–after, testimoni video</small></span></label>
+        <b class="small muted" style="text-transform:uppercase;letter-spacing:.08em;margin-top:6px">Selama iklan jalan</b>
+        <label class="ck"><input type="checkbox" data-ck><span>Story aktif tiap hari<small>Orang yang stalk lihat akun yang hidup</small></span></label>
+      </div>
+      <div class="checks">
+        <b class="small muted" style="text-transform:uppercase;letter-spacing:.08em">Highlight</b>
+        <label class="ck"><input type="checkbox" data-ck><span>Pricelist<small>Harga jelas, termasuk add-on</small></span></label>
+        <label class="ck"><input type="checkbox" data-ck><span>Testimoni<small>Screenshot chat, review Maps</small></span></label>
+        <label class="ck"><input type="checkbox" data-ck><span>Before–after / demo<small>Bukti hasil, bukan foto katalog</small></span></label>
+        <label class="ck"><input type="checkbox" data-ck><span>Lokasi & jam buka<small>Atau area home service</small></span></label>
+        <label class="ck"><input type="checkbox" data-ck><span>Cara booking<small>Langkah, DP, kebijakan reschedule</small></span></label>
+        <label class="ck"><input type="checkbox" data-ck><span>FAQ<small>Sakit? Tahan berapa lama? Aman?</small></span></label>
+      </div>
+    </div>
+    <div class="card score a" style="--i:3">
+      <div class="ring" id="scoreRing"><div id="scoreNum">0/12</div></div>
+      <b id="scoreTxt">Mulai centang</b>
+      <p class="muted small" id="scoreSub">Target: semua tercentang sebelum dan selama boost.</p>
+    </div>
+  </div>
+ </div>
+</section>
+
+<!-- 16 REVIEWS -->
+<section class="slide" data-title="W2: Riset dari Google Maps" data-sec="Workshop" data-timer>
+ <div class="inner">
+  <p class="eyebrow a">Workshop 2 · Cari key message</p>
+  <h2 class="a" style="--i:1">Cara riset paling murah adalah membaca review Google Maps.</h2>
+  <p class="lead a" style="--i:2">Bintang 1 = hal penting yang <b>dikecewakan</b>. Bintang 5 = hal penting yang <b>bikin puas</b>. Cek punya kamu, kompetitor, dan salon sejenis di kota lain. Tap tiap review.</p>
+  <div class="split mt" style="align-items:start">
+    <div class="revs a" style="--i:3">
+      <div class="revcol" id="rev1"><h3><span class="ic bad"><svg class="i"><use href="#i-star"/></svg></span>Bintang 1</h3></div>
+      <div class="revcol" id="rev5"><h3><span class="ic good"><svg class="i"><use href="#i-star"/></svg></span>Bintang 5</h3></div>
+    </div>
+    <div class="a" style="--i:4">
+      <h3 style="margin-bottom:10px">Variabel yang penting buat customer</h3>
+      <div class="vhead"><span>Variabel</span><span>★1</span><span>★5</span></div>
+      <div class="vboard" id="vboard"></div>
+      <p class="note" id="vnote"><svg class="i"><use href="#i-target"/></svg>Muncul di dua kolom = paling penting. Ini calon key message kamu.</p>
+      <p class="note"><svg class="i"><use href="#i-paper"/></svg>Review contoh untuk latihan.</p>
+    </div>
+  </div>
+ </div>
+</section>
+
+<!-- 17 ICP -->
+<section class="slide" data-title="W2: Spesifik ke ICP" data-sec="Workshop" data-timer>
+ <div class="inner">
+  <p class="eyebrow a">Workshop 2 · ICP</p>
+  <h2 class="a" style="--i:1">"Perempuan 20–45" masih terlalu luas. Kita pilih satu dulu.</h2>
+  <p class="lead a" style="--i:2">ICP itu gambaran pelanggan ideal kita. Pertama, home service atau datang ke salon? Lalu bedakan lagi. Tiap orang beda kekhawatirannya, beda juga pesan yang bikin dia booking.</p>
+  <div class="icps mt a" style="--i:3" id="icps"></div>
+  <div class="icp-detail a" style="--i:4">
+    <div class="card soft"><div class="k">Kekhawatiran</div><p id="icW"></p></div>
+    <div class="card soft"><div class="k">Yang dia cari di profil</div><p id="icL"></p></div>
+    <div class="card soft"><div class="k">Angle pesan</div><p id="icA"></p></div>
+  </div>
+ </div>
+</section>
+
+<!-- 17b HOME SERVICE -->
+<section class="slide" data-title="W2: Home service & merintis" data-sec="Workshop" data-timer>
+ <div class="inner">
+  <p class="eyebrow a">Home service atau masih merintis?</p>
+  <h2 class="a" style="--i:1">Nggak perlu kecil hati. Yang dicari klien home service itu kepastian, dan ini bisa diberikan bisnis sekecil apa pun.</h2>
+  <p class="lead a" style="--i:2">Bedah dulu ICP kamu butuh apa. Kebutuhan itu yang jadi key message, dan semuanya bisa dibuktikan di konten.</p>
+  <div class="g4 mt">
+    <div class="card km a" style="--i:3"><span class="ic"><svg class="i"><use href="#i-coin"/></svg></span><h3>Harga transparan</h3><div><div class="k">Takutnya</div><p>Harga nambah pas di rumah.</p></div><div><div class="k">Key message</div><p class="msg">"Harga di pricelist = yang kamu bayar. Termasuk transport."</p></div><div><div class="k">Bukti</div><p>Pricelist lengkap di highlight</p></div></div>
+    <div class="card km a" style="--i:4"><span class="ic"><svg class="i"><use href="#i-pin"/></svg></span><h3>Datang on time</h3><div><div class="k">Takutnya</div><p>Nunggu terapis yang nggak jelas datang jam berapa.</p></div><div><div class="k">Key message</div><p class="msg">"Kami kabari saat jalan, sampai sesuai jam janji."</p></div><div><div class="k">Bukti</div><p>Screenshot chat "otw" + review klien</p></div></div>
+    <div class="card km a" style="--i:5"><span class="ic"><svg class="i"><use href="#i-timer"/></svg></span><h3>Durasi sesuai janji</h3><div><div class="k">Takutnya</div><p>Molor, agenda lain berantakan.</p></div><div><div class="k">Key message</div><p class="msg">"Gel polos 60 menit. Selesai sebelum jemput anak."</p></div><div><div class="k">Bukti</div><p>Timelapse dengan jam terlihat</p></div></div>
+    <div class="card km a" style="--i:6"><span class="ic"><svg class="i"><use href="#i-check"/></svg></span><h3>Garansi</h3><div><div class="k">Takutnya</div><p>Lepas atau chip, terus gimana?</p></div><div><div class="k">Key message</div><p class="msg">"Lepas dalam 7 hari? Kami poles ulang gratis."</p></div><div><div class="k">Bukti</div><p>Video klaim garansi yang ditepati</p></div></div>
+  </div>
+  <p class="note"><svg class="i"><use href="#i-paper"/></svg>Contoh untuk ICP home service. Angka (60 menit, 7 hari) ganti sesuai yang benar-benar bisa kamu tepati.</p>
+ </div>
+</section>
+
+<!-- 18 GENERATOR -->
+<section class="slide" data-title="W2: Rumus konten" data-sec="Workshop" data-timer>
+ <div class="inner">
+  <p class="eyebrow a">Workshop 2 · Framework</p>
+  <h2 class="a" style="--i:1">Dari satu rumus ini, ide kontennya bisa banyak sekali.</h2>
+  <div class="eq a" style="--i:2"><span class="p a">Content pillar</span><span class="op">→</span><span class="p">Key message</span><span class="op">×</span><span class="p">ICP</span><span class="op">×</span><span class="p">Bukti / demo</span><span class="op">×</span><span class="p">Template</span></div>
+  <div class="gen">
+    <div class="pick a" style="--i:3">
+      <div><div class="k">Pillar (dari review)</div><div class="row" id="gP"></div></div>
+      <div><div class="k">ICP</div><div class="row" id="gI"></div></div>
+      <div><div class="k">Template</div><div class="row" id="gT"></div></div>
+    </div>
+    <div class="brief a" style="--i:4">
+      <div class="bh"><b>Brief konten</b><span class="tag" id="gCount"></span></div>
+      <dl>
+        <div><dt>Key message</dt><dd id="oMsg"></dd></div>
+        <div><dt>Untuk</dt><dd id="oFor"></dd></div>
+        <div><dt>Hook</dt><dd id="oHook"></dd></div>
+        <div><dt>Isi</dt><dd id="oBody"></dd></div>
+        <div><dt>Bukti / demo</dt><dd id="oProof"></dd></div>
+        <div><dt>CTA</dt><dd>Cek highlight Pricelist & Cara Booking di profil.</dd></div>
+      </dl>
+    </div>
+  </div>
+  <p class="note"><svg class="i"><use href="#i-check"/></svg>Key message harus bisa didemokan di video. Kalau bisa dibuktikan, orang nggak bisa membantah.</p>
+ </div>
+</section>
+
+<!-- 19 BUDGET RULES -->
+<section class="slide" data-title="W3: Aturan budget" data-sec="Workshop" data-timer>
+ <div class="inner">
+  <p class="eyebrow a">Workshop 3 · Budget</p>
+  <h2 class="a" style="--i:1">Mulai dari budget kecil, dengan aturan yang jelas kapan lanjut dan kapan berhenti.</h2>
+  <div class="rules mt">
+    <div class="card rule a" style="--i:2"><span class="ic gold"><svg class="i"><use href="#i-coin"/></svg></span><div class="v">Rp30.000</div><p class="muted small">per hari, per reels</p></div>
+    <div class="card rule a" style="--i:3"><span class="ic"><svg class="i"><use href="#i-pin"/></svg></span><div class="v">Radius 5–10 km</div><p class="muted small">dari lokasi salon</p></div>
+    <div class="card rule a" style="--i:4"><span class="ic"><svg class="i"><use href="#i-user"/></svg></span><div class="v">Perempuan, usia ICP</div><p class="muted small">sesuai ICP yang dipilih</p></div>
+    <div class="card rule a" style="--i:5"><span class="ic"><svg class="i"><use href="#i-polish"/></svg></span><div class="v">Interest nail</div><p class="muted small">manicure, nail art, beauty</p></div>
+  </div>
+  <p class="note a" style="--i:6;font-size:.9rem;color:var(--ink)"><svg class="i" style="color:var(--accent)"><use href="#i-eye"/></svg><span><b>Selama iklan jalan, upload story tiap hari.</b> Orang yang masuk profil dari iklan pasti stalk. Story hari ini bikin mereka yakin salonnya aktif.</span></p>
+  <div class="kpi">
+    <div class="card a" style="--i:6">
+      <h3>Hitung batas cost per profile visit kamu</h3>
+      <p class="muted small" style="margin:6px 0 14px">Nilai setelah spend Rp30.000. Kalau cost per visit di atas <b>0,25% × rata-rata transaksi</b>, matikan.</p>
+      <div class="inrow">
+        <label class="f">Rata-rata transaksi (Rp)<input class="t mono" id="kAov" inputmode="numeric" value="250000"></label>
+        <label class="f">Profile visit dari Rp30rb<input class="t mono" id="kVis" inputmode="numeric" value="40"></label>
+      </div>
+    </div>
+    <div class="card a" style="--i:7">
+      <div class="g2" style="gap:14px">
+        <div class="out"><span class="muted small">Batas maksimal / visit</span><span class="big" id="kMax"></span></div>
+        <div class="out"><span class="muted small">Cost / visit kamu</span><span class="big" id="kAct"></span></div>
+      </div>
+      <p class="muted small mt-s" id="kMin"></p>
+      <div class="verdict" id="kVer"></div>
+    </div>
+  </div>
+ </div>
+</section>
+
+<!-- 20 TEST BOARD -->
+<section class="slide" data-title="W3: Sistem scaling" data-sec="Workshop" data-timer>
+ <div class="inner">
+  <p class="eyebrow a">Workshop 3 · Scaling</p>
+  <h2 class="a" style="--i:1">Untuk scale, kami lebih memilih menambah konten yang lolos daripada menaikkan budget satu konten.</h2>
+  <p class="lead a" style="--i:2">Mau spend Rp90rb/hari? Berarti targetnya 3 konten pemenang, masing-masing Rp30rb. Konten yang belum lolos kita matikan dan ganti dengan konten baru.</p>
+  <div class="mt a" style="--i:3">
+    <div class="row" style="margin-bottom:12px;justify-content:space-between">
+      <label class="f" style="max-width:260px;flex:1">Rata-rata transaksi (Rp)<input class="t mono" id="tAov" inputmode="numeric" value="250000"></label>
+      <button type="button" class="btn" id="tAdd"><svg class="i"><use href="#i-plus"/></svg>Tambah reels</button>
+    </div>
+    <div class="board" id="board">
+      <div class="br h"><span>Reels</span><span>Spend</span><span>Visit</span><span>Cost / visit</span><span>Status</span></div>
+    </div>
+    <div class="scale">
+      <div><div class="small" style="opacity:.75">Budget harian sehat</div><div class="big" id="tBud"></div></div>
+      <div class="coins" id="tCoins" aria-hidden="true"></div>
+      <div class="small" style="opacity:.8;flex:1;min-width:180px" id="tTxt"></div>
+    </div>
+  </div>
+ </div>
+</section>
+
+<!-- 21 DIAGNOSA -->
+<section class="slide" data-title="W3: Diagnosa, bocornya di mana?" data-sec="Workshop" data-timer>
+ <div class="inner">
+  <p class="eyebrow a">Workshop 3 · Baca angka</p>
+  <h2 class="a" style="--i:1">Coba masukkan angka teman-teman, lalu kita lihat bocornya di bagian mana.</h2>
+  <div class="dx mt-s">
+    <div class="card a" style="--i:2">
+      <div class="inrow">
+        <label class="f">Rata-rata transaksi<input class="t mono" id="dAov" inputmode="numeric" value="250000"></label>
+        <label class="f">Spend iklan<input class="t mono" id="dSp" inputmode="numeric" value="300000"></label>
+        <label class="f">Reach (orang yang lihat)<input class="t mono" id="dRe" inputmode="numeric" value="18000"></label>
+        <label class="f">Profile visit<input class="t mono" id="dVi" inputmode="numeric" value="1100"></label>
+        <label class="f">Chat masuk<input class="t mono" id="dCh" inputmode="numeric" value="6"></label>
+        <label class="f">Booking<input class="t mono" id="dBo" inputmode="numeric" value="2"></label>
+      </div>
+      <p class="muted small" style="margin-top:12px">Ambil dari insight boost post dan catatan chat WA, periode yang sama. Angka contoh sudah terisi.</p>
+    </div>
+    <div class="a" style="--i:3">
+      <div class="stgs" id="dStg"></div>
+      <div class="dx-out" id="dOut"></div>
+    </div>
+  </div>
+  <p class="note"><svg class="i"><use href="#i-paper"/></svg>Patokan awal dari data Cap Naga Kembar. Setelah 2–4 minggu, pakai angka kamu sendiri sebagai patokan.</p>
+ </div>
+</section>
+
+<!-- 21b GUIDELINE -->
+<section class="slide" data-title="Panduan cek per issue" data-sec="Workshop">
+ <div class="inner">
+  <p class="eyebrow a">Panduan analisa</p>
+  <h2 class="a" style="--i:1">Panduan singkat membaca gejala dari angka.</h2>
+  <div class="tbl-wrap mt-s a" style="--i:2">
+   <table class="gl">
+    <thead><tr><th>Gejala di angka</th><th>Issue di</th><th>Cek ini dulu</th></tr></thead>
+    <tbody>
+     <tr><td>Cost per visit di atas 0,25% transaksi, atau reach → visit di bawah 5%</td><td><span class="pill c">Konten</span></td><td>Hook 3 detik pertama · bicara ke satu ICP · key message jelas & ada bukti · ada alasan buka profil · targeting radius & usia</td></tr>
+     <tr><td>Visit banyak dan murah, tapi chat di bawah 1% dari visit</td><td><span class="pill e">Bio, highlight, pinned</span></td><td>Bio jawab WHO + value dalam 5 detik · highlight pricelist, testimoni, cara booking · pinned isinya bukti · story hari ini ada · link WA sekali tap</td></tr>
+     <tr><td>Visit ke chat turun, padahal konten sama</td><td><span class="pill e">Profil nggak nyambung</span></td><td>Janji di konten harus terlihat di profil. Konten bilang "tahan 3 minggu", highlight harus ada buktinya</td></tr>
+     <tr><td>Chat banyak, booking di bawah 30% dari chat</td><td><span class="pill a2">Admin & penawaran</span></td><td>Balas &lt; 5 menit di jam kerja · harga sudah jelas sebelum chat · langsung tawarkan slot · follow up yang belum booking</td></tr>
+     <tr><td>Awalnya bagus, lalu cost per visit naik pelan-pelan</td><td><span class="pill c">Konten mulai jenuh</span></td><td>Jangan naikkan budget. Bikin konten baru dari key message yang sama, tes lagi Rp30rb</td></tr>
+    </tbody>
+   </table>
+  </div>
+  <p class="punch a" style="--i:3;font-size:1.25rem">Tanya klien baru: "Tahu kami dari mana?" Catat di satu sheet tiap minggu.</p>
+ </div>
+</section>
+
+<!-- 22 PLAN -->
+<section class="slide" data-title="Rencana 7 hari" data-sec="Penutup">
+ <div class="inner">
+  <p class="eyebrow a">Rencana setelah acara</p>
+  <h2 class="a" style="--i:1">Rencana 7 hari, dan boost baru dimulai di hari terakhir.</h2>
+  <div class="week mt">
+    <div class="day a" style="--i:2"><span class="d">HARI 1</span><b>Tulis ulang bio</b><p>WHO + value + bukti + CTA</p></div>
+    <div class="day a" style="--i:3"><span class="d">HARI 2</span><b>Rapikan highlight</b><p>Pricelist, testimoni, before–after, lokasi, booking, FAQ</p></div>
+    <div class="day a" style="--i:4"><span class="d">HARI 3</span><b>Pin 3 bukti</b><p>Review, before–after, video testimoni</p></div>
+    <div class="day a" style="--i:5"><span class="d">HARI 4</span><b>Baca 30 review</b><p>Bintang 1 & 5, kamu dan kompetitor</p></div>
+    <div class="day a" style="--i:6"><span class="d">HARI 5</span><b>Tulis 5 key message</b><p>Satu ICP dulu, tiap pesan ada buktinya</p></div>
+    <div class="day a" style="--i:7"><span class="d">HARI 6</span><b>Bikin 3 reels</b><p>Template beda-beda: stitch, voiceover, demo</p></div>
+    <div class="day go a" style="--i:8"><span class="d">HARI 7</span><b>Boost Rp30rb / reels</b><p>Nilai setelah Rp30rb. Story jalan tiap hari selama iklan aktif.</p></div>
+  </div>
+ </div>
+</section>
+
+<!-- 23 CLOSE -->
+<section class="slide" data-title="Penutup" data-sec="Penutup">
+ <div class="inner close">
+  <p class="eyebrow a">Kalau boleh disimpulkan</p>
+  <blockquote class="a" style="--i:1">Ads are an <span>amplifier</span>, not a savior.</blockquote>
+  <p class="lead a" style="--i:2">Iklan cuma memperbesar apa yang sudah ada. Kalau etalasenya meyakinkan, iklan memperbesar booking. Kalau belum, iklan memperbesar kebocoran.</p>
+  <div class="byline a" style="--i:3">
+    <span class="ic"><svg class="i"><use href="#i-chat"/></svg></span>
+    <div><div class="who">Terima kasih sudah meluangkan waktu. Yuk, tanya jawab.</div><div class="muted small">Andrew Ongso · BAIK Digital</div></div>
+  </div>
+ </div>
+</section>
+
+</main>
+
+<footer class="bottom">
+  <button class="nav" id="prev" type="button" aria-label="Slide sebelumnya"><svg class="i"><use href="#i-left"/></svg></button>
+  <div class="prog"><i id="prog"></i></div>
+  <button class="nav" id="next" type="button" aria-label="Slide berikutnya"><svg class="i"><use href="#i-right"/></svg></button>
+</footer>
+
+<div class="menu" id="menu" hidden><div class="menu-panel" role="dialog" aria-label="Daftar slide"><h3>Daftar slide</h3><ol id="menuList"></ol></div></div>
+
+<script>
+(function(){
+const $=s=>document.querySelector(s), $$=(s,r=document)=>[...r.querySelectorAll(s)];
+const rp=n=>'Rp'+Math.round(n).toLocaleString('id-ID');
+const num=n=>Math.round(n).toLocaleString('id-ID');
+const parse=v=>Number(String(v).replace(/[^\d]/g,''))||0;
+const reduce=matchMedia('(prefers-reduced-motion: reduce)').matches;
+const store={get(k){try{return localStorage.getItem(k)}catch(e){return null}},set(k,v){try{localStorage.setItem(k,v)}catch(e){}}};
+
+/* ---------- deck ---------- */
+const slides=$$('.slide'); let cur=0;
+const hooks={count:animateCounts};
+function go(i){
+  i=Math.max(0,Math.min(slides.length-1,i));
+  const back=i<cur;slides[cur].classList.remove('active'); cur=i;
+  slides[cur].classList.toggle('back',back);
+  const s=slides[cur]; s.classList.add('active'); s.scrollTop=0;
+  $('#count').textContent=(cur+1)+' / '+slides.length;
+  $('#prog').style.width=((cur+1)/slides.length*100)+'%';
+  $('#prev').disabled=cur===0; $('#next').disabled=cur===slides.length-1;
+  $('#timer').hidden=!s.hasAttribute('data-timer');
+  if(s.dataset.enter&&hooks[s.dataset.enter])hooks[s.dataset.enter](s);
+  try{history.replaceState(null,'','#slide-'+(cur+1))}catch(e){}
+  $$('#menuList button').forEach((b,k)=>b.setAttribute('aria-current',k===cur?'true':'false'));
+}
+$('#prev').onclick=()=>go(cur-1); $('#next').onclick=()=>go(cur+1);
+function typing(t){return t&&(t.isContentEditable||/^(INPUT|TEXTAREA|SELECT)$/.test(t.tagName))}
+document.addEventListener('keydown',e=>{
+  if(!$('#menu').hidden&&e.key==='Escape'){$('#menu').hidden=true;return}
+  if(typing(e.target))return;
+  if(['ArrowRight','PageDown'].includes(e.key)||(e.key===' '&&e.target.tagName!=='BUTTON')){e.preventDefault();go(cur+1)}
+  else if(['ArrowLeft','PageUp'].includes(e.key)){e.preventDefault();go(cur-1)}
+  else if(e.key==='Home')go(0); else if(e.key==='End')go(slides.length-1);
+});
+let tx=null,ty=null;
+$('#deck').addEventListener('touchstart',e=>{if(typing(e.target)||e.target.type==='range'){tx=null;return}tx=e.touches[0].clientX;ty=e.touches[0].clientY},{passive:true});
+$('#deck').addEventListener('touchend',e=>{if(tx===null)return;const dx=e.changedTouches[0].clientX-tx,dy=e.changedTouches[0].clientY-ty;if(Math.abs(dx)>70&&Math.abs(dx)>Math.abs(dy)*1.5)go(cur+(dx<0?1:-1));tx=null},{passive:true});
+// menu
+let lastSec='';
+slides.forEach((s,k)=>{
+  const li=document.createElement('li');
+  if(s.dataset.sec!==lastSec){lastSec=s.dataset.sec;const h=document.createElement('div');h.className='sec';h.textContent=lastSec;li.appendChild(h)}
+  const b=document.createElement('button');b.type='button';b.innerHTML='<span class="n">'+(k+1)+'</span><span></span>';b.lastChild.textContent=s.dataset.title;
+  b.onclick=()=>{$('#menu').hidden=true;go(k)};li.appendChild(b);$('#menuList').appendChild(li);
+});
+$('#menuBtn').onclick=()=>{$('#menu').hidden=false};
+$('#menu').onclick=e=>{if(e.target.id==='menu')$('#menu').hidden=true};
+$('#fs').onclick=()=>{try{if(document.fullscreenElement)document.exitFullscreen();else document.documentElement.requestFullscreen().catch(()=>{})}catch(e){}};
+
+/* ---------- timer ---------- */
+let tLeft=300,tInt=null;
+function tDraw(){const m=Math.floor(tLeft/60),s=tLeft%60;$('#tm').textContent=String(m).padStart(2,'0')+':'+String(s).padStart(2,'0');$('#timer').classList.toggle('done',tLeft===0)}
+function tStop(){clearInterval(tInt);tInt=null;$('#tgo').textContent='Mulai'}
+$$('#timer [data-min]').forEach(b=>b.onclick=()=>{tStop();tLeft=+b.dataset.min*60;tDraw()});
+$('#tgo').onclick=()=>{if(tInt){tStop();return}if(tLeft===0)tLeft=300;$('#tgo').textContent='Jeda';tInt=setInterval(()=>{tLeft=Math.max(0,tLeft-1);tDraw();if(!tLeft)tStop()},1000)};
+tDraw();
+
+/* ---------- counters ---------- */
+function animateCounts(s){
+  $$('[data-count]',s).forEach(el=>{
+    const to=+el.dataset.count,f=el.dataset.fmt==='rp'?rp:el.dataset.fmt==='jt'?jt:num;
+    if(reduce){el.textContent=f(to);return}
+    const t0=performance.now(),d=1500;
+    (function step(t){const p=Math.min(1,(t-t0)/d),e=1-Math.pow(1-p,3);el.textContent=f(to*e);if(p<1)requestAnimationFrame(step)})(t0);
+  });
+}
+
+function jt(n){return 'Rp'+(n/1e6).toLocaleString('id-ID',{maximumFractionDigits:1})+' jt'}
+
+/* ---------- villa daily chart ---------- */
+(function(){
+  const M=[['Mei',21,[18,10,9,5,12,9,2,1,15,8,14]],
+   ['Juni',1,[37,9,10,6,5,2,6,3,2,4,0,0,0,0,4,13,2,0,1,15,51,55,21,10,11,11,3,3,21,14]],
+   ['Juli',1,[13,8,5,6,1,11,5,10,6,8,3,14,6,9,5,4,8,4,7,12,9,4,6,3,2,6,12,7,4,6,4]],
+   ['Agustus',1,[2,6,4,3,5,0,5,0,2,2,7,3,7,5,0,2,6,6,6,0,4,1,3,2,7,7,3,0,0,2]]];
+  const D=[];M.forEach(([m,s,a])=>a.forEach((v,k)=>D.push({l:(s+k)+' '+m,v,m,first:k===0})));
+  const W=1000,H=210,L=30,B=24,T=10,max=60,bw=(W-L)/D.length,y=v=>T+(H-T-B)*(1-v/max);
+  let s='<svg viewBox="0 0 '+W+' '+H+'" role="img" aria-label="Grafik chat masuk per hari, 21 Mei sampai 30 Agustus">';
+  [0,20,40,60].forEach(g=>{s+='<line class="grid" x1="'+L+'" x2="'+W+'" y1="'+y(g)+'" y2="'+y(g)+'"/><text x="'+(L-6)+'" y="'+(y(g)+4)+'" text-anchor="end">'+g+'</text>'});
+  D.forEach((d,k)=>{const x=L+k*bw+1,w=Math.max(1,bw-2),top=y(d.v),h=H-B-top,r=Math.min(2,w/2,h);
+    if(d.first)s+='<text x="'+x+'" y="'+(H-6)+'">'+d.m+'</text>';
+    s+='<rect class="hit" data-k="'+k+'" x="'+(x-1)+'" y="'+T+'" width="'+bw+'" height="'+(H-B-T)+'"/>';
+    s+=d.v?'<path class="bar" d="M'+x+','+(H-B)+'V'+(top+r)+'Q'+x+','+top+' '+(x+r)+','+top+'H'+(x+w-r)+'Q'+(x+w)+','+top+' '+(x+w)+','+(top+r)+'V'+(H-B)+'Z"/>':'<path class="bar"/>';});
+  const pk=32;s+='<text x="'+(L+pk*bw+bw+6)+'" y="'+(y(55)+10)+'" style="fill:var(--ink);font-weight:700">Puncak 21–22 Juni</text></svg>';
+  const box=$('#vChart');box.insertAdjacentHTML('beforeend',s);
+  const tip=$('#vTip'),bars=$$('#vChart .bar');
+  $$('#vChart .hit').forEach(h=>{h.addEventListener('mouseenter',()=>{const k=+h.dataset.k;bars.forEach(b=>b.classList.remove('on'));bars[k].classList.add('on');
+    tip.hidden=false;tip.textContent=D[k].l+': '+D[k].v+' chat';tip.style.left=((L+k*bw+bw/2)/W*100)+'%'});
+    h.addEventListener('click',()=>h.dispatchEvent(new Event('mouseenter')))});
+  box.addEventListener('mouseleave',()=>{tip.hidden=true;bars.forEach(b=>b.classList.remove('on'))});
+})();
+
+/* ---------- poll ---------- */
+$$('[data-poll]').forEach(b=>b.onclick=()=>{const n=b.querySelector('.num');n.textContent=+n.textContent+1});
+
+/* ---------- journey ---------- */
+const J=[
+ {s:'Orang lewat depan salon kamu. Ada yang cuma lewat, ada yang melirik karena etalasenya menarik.',i:'Reels kamu muncul di feed atau explore. Boost post membuat lebih banyak orang "lewat". Kontennya yang menentukan mereka berhenti atau tidak.',q:'"Ini apa? Buat aku nggak?"'},
+ {s:'Mereka penasaran dan masuk. Lampu nyala, ada klien yang lagi dikerjain. Salonnya kelihatan hidup.',i:'Mereka klik profil kamu. Di sinilah boost "profile visit" berhenti bekerja. Story yang aktif hari ini bikin akun terasa hidup, bukan toko yang tutup.',q:'"Salon ini bisa dipercaya nggak?"'},
+ {s:'Resepsionis yang jelas jawab: harga berapa, berapa lama, hasilnya bisa lihat contohnya?',i:'Bio, highlight, dan pinned post adalah resepsionis kamu, kerja 24 jam. Kalau mereka diam, tamu pulang.',q:'"Harganya berapa? Ada buktinya? Lokasinya di mana?"'},
+ {s:'Tamu yang yakin langsung duduk di kursi. Nggak perlu dibujuk.',i:'Orang yang sudah yakin chat WA atau DM untuk booking. Tugas admin tinggal balas cepat.',q:'"Kosong jam berapa kak?"'}
+];
+function jSet(k){$$('#journey .station').forEach((b,x)=>b.setAttribute('aria-pressed',x===k?'true':'false'));$('#jSalon').textContent=J[k].s;$('#jIg').textContent=J[k].i;$('#jQ').textContent=J[k].q}
+$$('#journey .station').forEach(b=>b.onclick=()=>jSet(+b.dataset.j)); jSet(0);
+
+/* ---------- simulator ---------- */
+const LV=['Sangat lemah','Lemah','Cukup','Bagus','Sangat bagus'];
+const vr=[.005,.012,.022,.035,.05], cr=[.003,.006,.01,.015,.025];
+function sim(){
+  const a=+$('#sA').value-1,b=+$('#sB').value-1;
+  $('#aTxt').textContent=LV[a];$('#bTxt').textContent=LV[b];
+  const V=20000*vr[a],C=V*cr[b],B=C*.4;
+  const w=x=>Math.max(4,Math.sqrt(x/20000)*100)+'%';
+  [['#fV',V],['#fC',C],['#fB',B]].forEach(([id,x])=>{const el=$(id);el.style.width=w(x);el.firstChild.textContent=num(x<10?Math.round(x*10)/10:x)});
+  $('#cpb').textContent=B<1?'Belum ada booking':rp(300000/Math.round(B));
+}
+$('#sA').oninput=sim;$('#sB').oninput=sim;sim();
+
+/* ---------- matrix ---------- */
+$$('.quad').forEach(q=>q.onclick=()=>{const on=q.getAttribute('aria-pressed')==='true';$$('.quad').forEach(x=>x.setAttribute('aria-pressed','false'));q.setAttribute('aria-pressed',on?'false':'true')});
+
+/* ---------- editable case slots ---------- */
+$$('.slots').forEach(g=>{$$('.val',g).forEach(v=>{const key='bbcon-'+g.dataset.case+'-'+v.dataset.k;const s=store.get(key);if(s)v.textContent=s;v.addEventListener('input',()=>store.set(key,v.textContent.trim()));v.addEventListener('keydown',e=>{if(e.key==='Enter'){e.preventDefault();v.blur()}})})});
+
+/* ---------- bio builder ---------- */
+function bio(){
+  $('#pName').textContent=$('#bName').value;$('#pCat').textContent=$('#bCat').value;
+  const lines=[$('#bWho').value,$('#bVal').value,$('#bProof').value,$('#bCta').value].filter(x=>x.trim());
+  const t=lines.join('\n');$('#pBio').textContent=t;
+  const n=[...t].length,c=$('#bCount');c.textContent=n+' / 150 karakter';c.classList.toggle('over',n>150);
+  if(n>150)c.textContent+=' · kepanjangan';
+}
+['#bName','#bCat','#bWho','#bVal','#bProof','#bCta'].forEach(s=>$(s).addEventListener('input',bio));bio();
+
+/* ---------- checklist ---------- */
+function score(){const all=$$('[data-ck]'),n=all.filter(x=>x.checked).length,p=Math.round(n/all.length*100);
+  $('#scoreRing').style.setProperty('--p',p);$('#scoreNum').textContent=n+'/'+all.length;
+  $('#scoreTxt').textContent=n===all.length?'Etalase siap. Boleh boost.':n>=8?'Hampir siap':n>=4?'Masih bocor':'Jangan boost dulu';}
+$$('[data-ck]').forEach(x=>x.addEventListener('change',score));score();
+
+/* ---------- reviews ---------- */
+const R=[
+ [1,'Baru 4 hari gel-nya udah ngelupas di ujung. Nyesel.','Ketahanan'],
+ [1,'Booking jam 2, baru dikerjain jam 3. Nggak ada kabar.','Tepat waktu'],
+ [1,'Harga di IG beda sama di kasir, ada charge tambahan.','Harga transparan'],
+ [1,'Kutikula sampai luka, perih seminggu.','Kebersihan & keamanan'],
+ [5,'Udah 3 minggu masih rapi, nggak ada yang chip.','Ketahanan'],
+ [5,'Alatnya dibuka dari pouch steril di depan aku. Tenang.','Kebersihan & keamanan'],
+ [5,'Kakaknya sabar, dibantu pilih warna yang cocok sama kulitku.','Konsultasi'],
+ [5,'On time, 1 jam kelar, bisa langsung balik kantor.','Tepat waktu']
+];
+const V={};
+R.forEach((r,k)=>{const b=document.createElement('button');b.type='button';b.className='rv';b.setAttribute('aria-pressed','false');
+  b.innerHTML='<div class="stars">'+'★'.repeat(r[0])+'</div><div class="tx"></div><span class="var"></span>';
+  b.querySelector('.tx').textContent='"'+r[1]+'"';b.querySelector('.var').textContent='→ '+r[2];
+  b.onclick=()=>{const on=b.getAttribute('aria-pressed')!=='true';b.setAttribute('aria-pressed',on);V[k]=on;vb()};
+  $(r[0]===1?'#rev1':'#rev5').appendChild(b)});
+function vb(){const agg={};R.forEach((r,k)=>{if(!V[k])return;agg[r[2]]=agg[r[2]]||[0,0];agg[r[2]][r[0]===1?0:1]++});
+  const el=$('#vboard');el.innerHTML='';const keys=Object.keys(agg);
+  if(!keys.length){el.innerHTML='<div class="vrow"><span class="muted">Tap review di kiri untuk mulai.</span><span></span><span></span></div>';return}
+  keys.sort((a,b)=>(agg[b][0]&&agg[b][1])-(agg[a][0]&&agg[a][1])).forEach(k=>{const r=document.createElement('div');r.className='vrow'+(agg[k][0]&&agg[k][1]?' both':'');
+    r.innerHTML='<b></b><span class="mono">'+(agg[k][0]||'·')+'</span><span class="mono">'+(agg[k][1]||'·')+'</span>';r.firstChild.textContent=k;el.appendChild(r)})}
+vb();
+
+/* ---------- ICP ---------- */
+const ICP=[
+ {k:'home',n:'Home service',d:'Treatment di rumah',w:'Telat datang, alat dibawa bersih atau nggak, rumah jadi berantakan.',l:'Area layanan, jadwal, foto alat & cara sterilisasi, review klien home service.',a:'Profesional datang tepat waktu, rapi, steril.',who:'yang mau treatment di rumah'},
+ {k:'ibu',n:'Ibu-ibu',d:'Waktu sempit, mau praktis',w:'Lama, harus balik lagi karena cepat rusak.',l:'Durasi treatment, ketahanan, slot pagi atau siang.',a:'Sekali datang, rapi berminggu-minggu.',who:'ibu yang waktunya sempit'},
+ {k:'detail',n:'Paham detail',d:'Peduli produk & teknik',w:'Produk murah, teknik asal, kuku asli rusak.',l:'Brand gel, proses prep, edukasi perawatan.',a:'Edukasi: kenapa proses kami beda.',who:'yang peduli produk & teknik'},
+ {k:'beginner',n:'Beginner',d:'Baru mulai rawat kuku',w:'Nggak tahu mau pilih apa, takut salah pilih.',l:'Menu yang simpel, rekomendasi untuk pemula.',a:'Nggak perlu bingung, kami bantu pilih.',who:'yang baru mulai rawat kuku'},
+ {k:'rutin',n:'Pelanggan rutin',d:'Treatment tiap bulan',w:'Slot penuh, kualitas nggak konsisten.',l:'Paket, member, cara booking ulang.',a:'Konsisten tiap kali datang, slot prioritas.',who:'yang treatment tiap bulan'},
+ {k:'first',n:'First timer',d:'Belum pernah ke salon kamu',w:'Sakit nggak? Harganya tiba-tiba nambah?',l:'Pricelist lengkap, FAQ, before–after, review.',a:'Semua jelas sebelum datang. Nggak ada kejutan.',who:'yang belum pernah ke salon kamu'}
+];
+ICP.forEach((c,k)=>{const b=document.createElement('button');b.type='button';b.className='icp';b.setAttribute('aria-pressed',k===0);
+  b.innerHTML='<span class="ic"><svg class="i"><use href="#i-'+(c.k==='home'?'home':c.k==='first'?'search':c.k==='rutin'?'cal':c.k==='detail'?'polish':'user')+'"/></svg></span><b></b><span class="muted small"></span>';
+  b.querySelector('b').textContent=c.n;b.querySelector('.muted').textContent=c.d;
+  b.onclick=()=>icSet(k);$('#icps').appendChild(b)});
+function icSet(k){$$('#icps .icp').forEach((b,x)=>b.setAttribute('aria-pressed',x===k));$('#icW').textContent=ICP[k].w;$('#icL').textContent=ICP[k].l;$('#icA').textContent=ICP[k].a}
+icSet(0);
+
+/* ---------- generator ---------- */
+const P=[
+ {n:'Ketahanan',m:'Gel tahan 3 minggu tanpa chip.',p:'Timelapse kuku klien minggu 1 sampai minggu 3.',q:'Beneran bisa tahan 3 minggu?',f:'close-up kuku klien di minggu ke-3'},
+ {n:'Kebersihan',m:'Alat steril, dibuka di depan kamu.',p:'Video buka pouch sterilisasi di depan klien.',q:'Alatnya steril nggak sih?',f:'proses sterilisasi dan buka pouch'},
+ {n:'Tepat waktu',m:'Mulai sesuai jam booking, selesai sesuai estimasi.',p:'Jam dinding terlihat di awal dan akhir treatment.',q:'Bisa kelar sebelum jam makan siang?',f:'timelapse treatment dengan jam terlihat'},
+ {n:'Harga transparan',m:'Harga di IG sama dengan harga di kasir.',p:'Pricelist lengkap termasuk add-on, ditunjukkan di video.',q:'Ada charge tambahan nggak?',f:'pricelist dan proses bayar'},
+ {n:'Konsultasi',m:'Dibantu pilih warna dan bentuk yang cocok.',p:'Rekaman sesi konsultasi sampai hasil jadi.',q:'Bingung pilih warna, dibantuin nggak?',f:'konsultasi warna sampai hasil jadi'},
+ {n:'Garansi',m:'Lepas dalam 7 hari, kami poles ulang gratis.',p:'Video klaim garansi yang ditepati, plus chat kliennya.',q:'Kalau lepas sebelum seminggu gimana?',f:'proses perbaikan garansi'}
+];
+const T=[
+ {n:'Stitch / balas komen',h:(p,i)=>'Balas komen: "'+p.q+'"',b:(p,i)=>'Jawab langsung ke '+i.who+', lalu tunjukkan '+p.f+'.'},
+ {n:'Voiceover + compile footage',h:(p,i)=>'"Buat kamu '+i.who+': '+p.m.charAt(0).toLowerCase()+p.m.slice(1)+'"',b:(p,i)=>'Voiceover 15–25 detik di atas compile footage '+p.f+'.'},
+ {n:'Demo before–after',h:(p,i)=>'Tunjukkan hasil akhir di 2 detik pertama.',b:(p,i)=>'Before, proses, after. Fokus ke '+p.f+'. Teks di layar menyebut '+i.who+'.'},
+ {n:'Jawab FAQ',h:(p,i)=>'"'+p.q+'" Ini pertanyaan yang paling sering masuk dari '+i.who+'.',b:(p,i)=>'Talking head 20 detik, potong ke '+p.f+' sebagai bukti.'}
+];
+const G={p:0,i:5,t:0};
+function mk(id,arr,key){const w=$(id);arr.forEach((x,k)=>{const b=document.createElement('button');b.type='button';b.className='btn';b.textContent=x.n;b.setAttribute('aria-pressed',k===G[key]);b.onclick=()=>{G[key]=k;$$('button',w).forEach((y,z)=>y.setAttribute('aria-pressed',z===k));gen()};w.appendChild(b)})}
+mk('#gP',P,'p');mk('#gI',ICP,'i');mk('#gT',T,'t');
+function gen(){const p=P[G.p],i=ICP[G.i],t=T[G.t];
+  $('#oMsg').textContent=p.m;$('#oFor').textContent=i.n+' · '+i.d;$('#oHook').textContent=t.h(p,i);$('#oBody').textContent=t.b(p,i);$('#oProof').textContent=p.p;
+  $('#gCount').textContent=(P.length*ICP.length*T.length)+' kombinasi';}
+gen();
+
+/* ---------- KPI calc ---------- */
+function kpi(){const aov=parse($('#kAov').value),vis=parse($('#kVis').value);
+  const max=aov*.0025,act=vis?30000/vis:Infinity;
+  $('#kMax').textContent=aov?rp(max):'–';$('#kAct').textContent=vis?rp(act):'–';
+  $('#kMin').textContent=aov?'Artinya dari Rp30.000 kamu butuh minimal '+num(Math.ceil(30000/max))+' profile visit.':'';
+  const v=$('#kVer');if(!aov||!vis){v.className='verdict';v.textContent='';return}
+  const ok=act<=max;v.className='verdict '+(ok?'ok':'no');
+  v.innerHTML='<svg class="i"><use href="#i-'+(ok?'check':'x')+'"/></svg><span></span>';
+  v.lastChild.textContent=ok?'Lanjut. Konten ini layak terus jalan Rp30rb/hari.':'Matikan. Bikin konten baru, jangan naikkan budget.';}
+['#kAov','#kVis'].forEach(s=>$(s).addEventListener('input',kpi));kpi();
+
+/* ---------- test board ---------- */
+const rows=[['Reels A · stitch "beneran tahan?"',72],['Reels B · pamer hasil',28],['Reels C · demo steril',64],['Reels D · promo diskon',35],['Reels E · voiceover ibu sibuk',61]];
+function addRow(name,vis){const r=document.createElement('div');r.className='br';
+  r.innerHTML='<input class="t name" aria-label="Nama reels"><span class="mono small">Rp30.000</span><input class="t mono vis" inputmode="numeric" aria-label="Profile visit"><span class="mono small cpv-c cpv"></span><span class="st-c"><span class="st"></span></span>';
+  r.querySelector('.name').value=name;r.querySelector('.vis').value=vis;
+  $$('input',r).forEach(x=>x.addEventListener('input',board));$('#board').appendChild(r)}
+rows.forEach(r=>addRow(r[0],r[1]));
+$('#tAdd').onclick=()=>{addRow('Reels baru',0);board()};
+$('#tAov').addEventListener('input',board);
+function board(){const max=parse($('#tAov').value)*.0025;let win=0;
+  $$('#board .br:not(.h)').forEach(r=>{const v=parse(r.querySelector('.vis').value),c=v?30000/v:Infinity,ok=max>0&&c<=max;
+    r.querySelector('.cpv').textContent=v?rp(c):'–';const st=r.querySelector('.st');st.className='st '+(ok?'ok':'no');
+    st.innerHTML='<svg class="i"><use href="#i-'+(ok?'check':'x')+'"/></svg><span></span>';st.lastChild.textContent=ok?'Lanjut':'Off, buat konten baru';
+    r.classList.toggle('off',!ok);if(ok)win++});
+  $('#tBud').textContent=rp(win*30000)+'/hari';
+  $('#tCoins').innerHTML=Array.from({length:win},()=>'<span>30rb</span>').join('');
+  $('#tTxt').textContent=win+' konten pemenang × Rp30.000. Batas cost per visit: '+(max?rp(max):'–')+'. Yang off diganti konten baru, lalu dites lagi.';}
+board();
+
+/* ---------- diagnosis ---------- */
+const DX={
+ konten:{t:'Mulai dari konten',r:'Orang lihat, tapi nggak tertarik masuk profil.',c:['Hook 3 detik pertama bikin berhenti scroll?','Bicara ke satu ICP, bukan semua orang?','Key message jelas dan ada bukti atau demo?','Ada alasan untuk buka profil ("cek pricelist di profil")?','Targeting: radius 5–10 km, usia sesuai ICP?']},
+ etalase:{t:'Mulai dari etalase: bio, highlight, pinned',r:'Orang sudah masuk profil, tapi belum yakin untuk chat. Ini gratis untuk dibenerin, jadi kerjakan duluan.',c:['Bio: WHO + value kebaca dalam 5 detik?','Highlight: pricelist, testimoni, before–after, cara booking ada?','Pinned: 3 post isinya bukti, bukan promo?','Story hari ini ada? Akun terlihat hidup?','Link WA sekali tap langsung chat?','Janji di konten terlihat buktinya di profil?']},
+ admin:{t:'Mulai dari admin & penawaran',r:'Orang sudah chat, tapi nggak jadi booking.',c:['Chat dibalas di bawah 5 menit di jam kerja?','Harga sudah jelas sebelum chat, nggak bikin kaget?','Langsung tawarkan slot yang tersedia?','Chat yang belum booking di-follow up?']},
+ ok:{t:'Semua tahap sehat',r:'Ini saatnya scale: tambah jumlah konten pemenang, masing-masing Rp30rb/hari.',c:['Cari key message baru dari review','Tes 2–3 konten baru minggu ini']}
+};
+function pct(x){return (x*100).toLocaleString('id-ID',{maximumFractionDigits:2})+'%'}
+function diag(){const g=id=>parse($(id).value);const aov=g('#dAov'),sp=g('#dSp'),re=g('#dRe'),vi=g('#dVi'),ch=g('#dCh'),bo=g('#dBo');
+  const lim=aov*.0025,cpv=vi?sp/vi:Infinity,r1=re?vi/re:0,r2=vi?ch/vi:0,r3=ch?bo/ch:0;
+  const okC=cpv<=lim&&r1>=.05,okE=r2>=.01,okA=r3>=.3;
+  const st=[
+   ['reels','Konten','Cost/visit '+(vi?rp(cpv):'–')+' · batas '+rp(lim),pct(r1)+' visit',okC,'reach → visit ≥ 5%'],
+   ['store','Bio, highlight, pinned','Visit → chat, patokan ≥ 1%',pct(r2),okE,''],
+   ['chat','Admin & penawaran','Chat → booking, patokan ≥ 30%',pct(r3),okA,'']];
+  $('#dStg').innerHTML=st.map(x=>'<div class="stg"><span class="ic"><svg class="i"><use href="#i-'+x[0]+'"/></svg></span><div><b>'+x[1]+'</b><span class="muted">'+x[2]+(x[5]?' · '+x[5]:'')+'</span></div><span class="v">'+x[3]+'</span><span class="pill '+(x[4]?'ok':'no')+'">'+(x[4]?'Sehat':'Cek')+'</span></div>').join('');
+  const k=!okE?'etalase':!okA?'admin':!okC?'konten':'ok';const d=DX[k];
+  const other=[!okC&&k!=='konten'?'konten':null,!okA&&k!=='admin'?'admin':null].filter(Boolean);
+  $('#dOut').innerHTML='<h3></h3><p></p><ul></ul>';$('#dOut h3').textContent=d.t;
+  $('#dOut p').textContent=d.r+(other.length?' Setelah itu: '+other.map(x=>x==='konten'?'konten':'admin & penawaran').join(', ')+'.':'');
+  d.c.forEach(c=>{const li=document.createElement('li');li.textContent=c;$('#dOut ul').appendChild(li)});}
+['#dAov','#dSp','#dRe','#dVi','#dCh','#dBo'].forEach(s=>$(s).addEventListener('input',diag));diag();
+
+/* ---------- start ---------- */
+const m=/^#slide-(\d+)$/.exec(location.hash);
+slides[0].classList.add('active');go(m?(+m[1]-1):0);
+addEventListener('hashchange',()=>{const m=/^#slide-(\d+)$/.exec(location.hash);if(m&&+m[1]-1!==cur)go(+m[1]-1)});
+})();
+</script>
+
+</html>
